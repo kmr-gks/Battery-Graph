@@ -46,7 +46,7 @@
 - プログラミング言語: Kotlin
 - UI: Android SDK（Jetpack Compose または XML）
 - データベース: Room または SQLite
-- グラフ表示ライブラリ: 未定
+- グラフ表示ライブラリ: MPAndroidChart
 - 常駐処理: Foreground Service、または WorkManager（要比較）
 
 ---
