@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.gukos.battery_graph.data.dao.BatteryDao
 import com.gukos.battery_graph.data.entity.BatteryRecord
 
-@Database(entities = [BatteryRecord::class], version = 1)
+@Database(entities = [BatteryRecord::class], version = 1, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun batteryDao(): BatteryDao

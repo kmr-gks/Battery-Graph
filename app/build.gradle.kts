@@ -1,10 +1,7 @@
-import org.jetbrains.kotlin.gradle.tasks.Kapt
-
 plugins {
 	id("com.android.application")
-	id("org.jetbrains.kotlin.android")
 	id("org.jetbrains.kotlin.plugin.compose")
-	id("org.jetbrains.kotlin.kapt")
+	id("com.android.legacy-kapt")
 }
 
 android {
@@ -37,8 +34,11 @@ android {
 		sourceCompatibility = JavaVersion.VERSION_1_8
 		targetCompatibility = JavaVersion.VERSION_1_8
 	}
-	kotlinOptions {
-		jvmTarget = "1.8"
+	// AGP 9.0+ built-in Kotlin uses compilerOptions instead of kotlinOptions
+	kotlin {
+		compilerOptions {
+			jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
+		}
 	}
 	buildFeatures {
 		compose = true
