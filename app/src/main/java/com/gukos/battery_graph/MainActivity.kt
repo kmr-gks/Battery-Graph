@@ -1,5 +1,6 @@
 package com.gukos.battery_graph
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,13 +18,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.gukos.battery_graph.ui.theme.BatteryGraphTheme
 import com.gukos.battery_graph.ui.viewmodel.BatteryViewModel
 import com.gukos.battery_graph.ui.viewmodel.BatteryViewModelFactory
+import com.gukos.battery_graph.worker.BatteryWorker
+import java.util.Date
+import java.text.SimpleDateFormat
 
 class MainActivity : ComponentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+        scheduleBatteryWorker(applicationContext)
 
         setContent {
             val viewModel: BatteryViewModel = viewModel(
@@ -45,9 +53,22 @@ fun BatteryScreen(viewModel: BatteryViewModel) {
 
         LazyColumn {
             items(records) { record ->
-                Text("${record.timestamp} : ${record.level}%")
+                Text("${Date(record.timestamp)}: ${record.level}%")
             }
         }
     }
 }
+    private fun scheduleBatteryWorker(context: Context) {
+
+        val workRequest =
+            PeriodicWorkRequestBuilder<BatteryWorker>(
+                15, java.util.concurrent.TimeUnit.MINUTES
+            ).build()
+
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            "battery_record_work",
+            ExistingPeriodicWorkPolicy.KEEP,
+            workRequest
+        )
+    }
 }
