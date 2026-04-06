@@ -1,0 +1,55 @@
+@startuml
+
+package data {
+  class BatteryRecord {
+    id: Int
+    timestamp: Long
+    level: Int
+  }
+
+  interface BatteryDao {
+    + insert(record: BatteryRecord)
+    + getAll(): Flow<List<BatteryRecord>>
+  }
+
+  class AppDatabase {
+    + batteryDao(): BatteryDao
+  }
+}
+
+package util {
+  class BatteryManagerWrapper {
+    + getBatteryLevel(): Int
+  }
+}
+
+package repository {
+  class BatteryRepository {
+    - dao: BatteryDao
+    - batteryManager: BatteryManagerWrapper
+    + getRecords(): Flow<List<BatteryRecord>>
+    + recordBatteryLevel()
+  }
+}
+
+package ui {
+  class BatteryViewModel {
+    - repository: BatteryRepository
+    + batteryRecords: StateFlow<List<BatteryRecord>>
+  }
+}
+
+package worker {
+  class BatteryWorker {
+    + doWork(): Result
+  }
+}
+
+BatteryDao --> BatteryRecord
+AppDatabase --> BatteryDao
+BatteryRepository --> BatteryDao
+BatteryRepository --> BatteryManagerWrapper
+BatteryViewModel --> BatteryRepository
+BatteryWorker --> BatteryRepository
+
+@enduml

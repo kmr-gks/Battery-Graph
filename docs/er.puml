@@ -1,0 +1,10 @@
+@startuml
+
+entity "battery_records" as battery_records {
+  + id : Int <<PK>>
+  --
+  timestamp : Long
+  level : Int
+}
+
+@enduml
