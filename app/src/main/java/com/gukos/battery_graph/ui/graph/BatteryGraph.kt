@@ -1,20 +1,16 @@
 package com.gukos.battery_graph.ui.graph
 
+import android.graphics.Color
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.platform.LocalContext
-
 import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
-import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.formatter.ValueFormatter
-
-import android.graphics.Color
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.DrawerValue
-import androidx.compose.ui.Modifier
 import com.gukos.battery_graph.data.entity.BatteryRecord
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -65,6 +61,11 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
                         }
                     }
                 }
+                axisLeft.apply {
+                    axisMinimum=0f
+                    axisMaximum=100f
+                }
+
             }
         },
         update = { chart ->
