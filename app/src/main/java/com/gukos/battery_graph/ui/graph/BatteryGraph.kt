@@ -13,6 +13,7 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 
 import android.graphics.Color
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.DrawerValue
 import androidx.compose.ui.Modifier
 import com.gukos.battery_graph.data.entity.BatteryRecord
 import java.text.SimpleDateFormat
@@ -56,6 +57,7 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
                 color = Color.GREEN
                 setDrawCircles(false)
                 lineWidth = 2f
+                setDrawValues(false)
             }
             chart.data = LineData(dataSet)
             chart.invalidate()
