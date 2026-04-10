@@ -20,7 +20,7 @@ class BatteryReceiver : BroadcastReceiver() {
             val level = intent.getIntExtra(
                 BatteryManager.EXTRA_LEVEL, -1
             )
-            Log.d("tag","percent=$level")
+            Log.d("tag", "percent=$level")
 
             val db = AppDatabase.getDatabase(context)
             val repository = BatteryRepository(db.batteryDao(), BatteryManagerWrapper(context))
