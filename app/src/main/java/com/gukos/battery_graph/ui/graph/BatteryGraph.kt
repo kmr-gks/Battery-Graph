@@ -112,12 +112,19 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
         // =========================
 
         val xSteps = (4 * scale).toInt().coerceIn(4, 40)
-        val dateFormat = SimpleDateFormat("HH:mm", Locale.JAPAN)
+
+        val timeFormat = SimpleDateFormat("HH:mm", Locale.JAPAN)
+        val dateFormat = SimpleDateFormat("MM/dd", Locale.JAPAN)
+
+        var lastDate: String? = null
 
         for (i in 0..xSteps) {
 
             val t = minX + (rangeX * i / xSteps)
             val x = mapX(t.toLong())
+
+            val date = dateFormat.format(Date(t.toLong()))
+            val time = timeFormat.format(Date(t.toLong()))
 
             // 目盛り線
             drawLine(
@@ -127,21 +134,38 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
                 strokeWidth = 1f
             )
 
-            // 時間テキスト
-            val timeText = dateFormat.format(Date(t.toLong()))
-
-            val textLayout = textMeasurer.measure(
-                text = timeText,
+            // 時間表示（必ず表示）
+            val timeLayout = textMeasurer.measure(
+                text = time,
                 style = TextStyle(fontSize = 12.sp, color = Color.Gray)
             )
 
             drawText(
-                textLayoutResult = textLayout,
+                textLayoutResult = timeLayout,
                 topLeft = Offset(
-                    x - textLayout.size.width / 2,
+                    x - timeLayout.size.width / 2,
                     paddingTop + graphHeight + 5f
                 )
             )
+
+            // ★日付は変わったときだけ表示
+            if (date != lastDate) {
+
+                val dateLayout = textMeasurer.measure(
+                    text = date,
+                    style = TextStyle(fontSize = 10.sp, color = Color.DarkGray)
+                )
+
+                drawText(
+                    textLayoutResult = dateLayout,
+                    topLeft = Offset(
+                        x - dateLayout.size.width / 2,
+                        paddingTop + graphHeight + 40f
+                    )
+                )
+
+                lastDate = date
+            }
         }
 
         // Y軸
