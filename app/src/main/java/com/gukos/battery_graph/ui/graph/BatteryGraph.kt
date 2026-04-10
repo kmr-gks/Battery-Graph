@@ -44,6 +44,12 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
         val width = size.width
         val height = size.height
 
+        val paddingLeft = 80f
+        val paddingBottom = 60f
+
+        val graphWidth = width - paddingLeft
+        val graphHeight = height - paddingBottom
+
         val minX = records.first().first.toDouble()
         val maxX = records.last().first.toDouble()
         val rangeX = (maxX - minX).coerceAtLeast(1.0)
@@ -58,6 +64,43 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
 
         fun mapY(level: Int): Float {
             return height - ((level - minY) / (maxY - minY) * height)
+        }
+
+        // =========================
+        // 軸（X・Y）
+        // =========================
+
+        // Y軸
+        drawLine(
+            color = Color.Gray,
+            start = Offset(paddingLeft, 0f),
+            end = Offset(paddingLeft, graphHeight),
+            strokeWidth = 2f
+        )
+
+        // X軸
+        drawLine(
+            color = Color.Gray,
+            start = Offset(paddingLeft, graphHeight),
+            end = Offset(width, graphHeight),
+            strokeWidth = 2f
+        )
+
+        // =========================
+        // Y軸目盛り（0〜100）
+        // =========================
+
+        val steps = 5
+        for (i in 0..steps) {
+            val yValue = i * 20
+            val y = graphHeight - (yValue / 100f) * graphHeight
+
+            drawLine(
+                color = Color.LightGray,
+                start = Offset(paddingLeft, y),
+                end = Offset(width, y),
+                strokeWidth = 1f
+            )
         }
 
         for (i in 0 until records.size - 1) {
