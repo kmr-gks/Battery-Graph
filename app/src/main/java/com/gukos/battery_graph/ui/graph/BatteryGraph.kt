@@ -1,200 +1,87 @@
 package com.gukos.battery_graph.ui.graph
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.rememberTransformableState
-import androidx.compose.foundation.gestures.transformable
+import android.graphics.Color
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.formatter.ValueFormatter
 import com.gukos.battery_graph.data.entity.BatteryRecord
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-
 @Composable
 fun BatteryGraph(recordsList: List<BatteryRecord>) {
 
-    val records = remember(recordsList) {
-        recordsList
-            .sortedBy { it.timestamp }
-            .map { it.timestamp to it.level }
-    }
+    AndroidView(
+        modifier = Modifier.fillMaxSize(), // ← これが重要
+        factory = { context ->
+            LineChart(context).apply {
+                description.isEnabled = false
+                legend.isEnabled = false
+                axisRight.isEnabled = false
+                xAxis.position = XAxis.XAxisPosition.BOTTOM
+                isScaleXEnabled = true
+                isScaleYEnabled = false
+                isDragEnabled = true
+                setPinchZoom(true)
+                setTouchEnabled(true)
+                setDragDecelerationFrictionCoef(0.9f)
+                setVisibleXRangeMinimum(10f) // 最小表示範囲
 
-    if (records.size < 2) return
+                xAxis.apply {
+                    position = XAxis.XAxisPosition.BOTTOM
 
-    var scale by remember { mutableStateOf(1f) }
-    var offsetX by remember { mutableStateOf(0f) }
+                    // ★これで「グリッドと一緒に動く」
+                    setDrawGridLines(true)
+                    // ★これを追加
+                    valueFormatter = object : ValueFormatter() {
 
-    val transformState = rememberTransformableState { zoomChange, panChange, _ ->
-        scale = (scale * zoomChange).coerceIn(1f, 5f)
-        offsetX += panChange.x
-    }
+                        private val timeFormat = SimpleDateFormat("HH:mm", Locale.JAPAN)
+                        private val dateFormat = SimpleDateFormat("MM/dd", Locale.JAPAN)
+                        private var lastDate: String? = null
 
-    val textMeasurer = rememberTextMeasurer()
+                        override fun getFormattedValue(value: Float): String {
+                            val date = Date(value.toLong())
+                            val currentDate = dateFormat.format(date)
+                            val time = timeFormat.format(date)
 
-    Canvas(
-        modifier = Modifier
-            .fillMaxSize()
-            .transformable(state = transformState)
-    ) {
+                            return if (currentDate != lastDate) {
+                                lastDate = currentDate
+                                "$time\n$currentDate"
+                            } else {
+                                time
+                            }
+                        }
+                    }
+                }
+                axisLeft.apply {
+                    axisMinimum=0f
+                    axisMaximum=100f
+                }
 
-        val width = size.width
-        val height = size.height
-
-        // =========================
-        // ★余白を追加
-        // =========================
-        val paddingLeft = 80f
-        val paddingRight = 20f
-        val paddingTop = 40f
-        val paddingBottom = 60f
-
-        val graphWidth = width - paddingLeft - paddingRight
-        val graphHeight = height - paddingTop - paddingBottom
-
-        val minX = records.first().first.toDouble()
-        val maxX = records.last().first.toDouble()
-        val rangeX = (maxX - minX).coerceAtLeast(1.0)
-
-        val maxY = 100f
-        val minY = 0f
-
-        fun mapX(t: Long): Float {
-            val base = (((t.toDouble() - minX) / rangeX) * graphWidth).toFloat()
-            return base * scale + paddingLeft + offsetX
-        }
-
-        fun mapY(level: Int): Float {
-            return paddingTop + graphHeight -
-                    ((level - minY) / (maxY - minY) * graphHeight)
-        }
-
-        // =========================
-        // Y軸目盛り＋数字
-        // =========================
-
-        val steps = 5
-        for (i in 0..steps) {
-            val value = i * 20
-            val y = paddingTop + graphHeight - (value / 100f) * graphHeight
-
-            val textLayout = textMeasurer.measure(
-                text = "$value%",
-                style = TextStyle(fontSize = 12.sp, color = Color.Gray)
-            )
-
-            drawText(
-                textLayoutResult = textLayout,
-                topLeft = Offset(10f, y - textLayout.size.height / 2)
-            )
-
-            drawLine(
-                color = Color.LightGray,
-                start = Offset(paddingLeft, y),
-                end = Offset(width - paddingRight, y),
-                strokeWidth = 1f
-            )
-        }
-
-        // =========================
-        // X軸メモリ（時間）
-        // =========================
-
-        val xSteps = (4 * scale).toInt().coerceIn(4, 40)
-
-        val timeFormat = SimpleDateFormat("HH:mm", Locale.JAPAN)
-        val dateFormat = SimpleDateFormat("MM/dd", Locale.JAPAN)
-
-        var lastDate: String? = null
-
-        for (i in 0..xSteps) {
-
-            val t = minX + (rangeX * i / xSteps)
-            val x = mapX(t.toLong())
-
-            val date = dateFormat.format(Date(t.toLong()))
-            val time = timeFormat.format(Date(t.toLong()))
-
-            // 目盛り線
-            drawLine(
-                color = Color.LightGray,
-                start = Offset(x, paddingTop),
-                end = Offset(x, paddingTop + graphHeight),
-                strokeWidth = 1f
-            )
-
-            // 時間表示（必ず表示）
-            val timeLayout = textMeasurer.measure(
-                text = time,
-                style = TextStyle(fontSize = 12.sp, color = Color.Gray)
-            )
-
-            drawText(
-                textLayoutResult = timeLayout,
-                topLeft = Offset(
-                    x - timeLayout.size.width / 2,
-                    paddingTop + graphHeight + 5f
-                )
-            )
-
-            // ★日付は変わったときだけ表示
-            if (date != lastDate) {
-
-                val dateLayout = textMeasurer.measure(
-                    text = date,
-                    style = TextStyle(fontSize = 10.sp, color = Color.DarkGray)
-                )
-
-                drawText(
-                    textLayoutResult = dateLayout,
-                    topLeft = Offset(
-                        x - dateLayout.size.width / 2,
-                        paddingTop + graphHeight + 40f
-                    )
-                )
-
-                lastDate = date
             }
+        },
+        update = { chart ->
+            val entries = recordsList
+                .sortedBy { it.timestamp }
+                .map {
+                    Entry(it.timestamp.toFloat(), it.level.toFloat())
+                }
+            val dataSet = LineDataSet(entries, "Battery").apply {
+                color = Color.RED
+                setDrawCircles(false)
+                lineWidth = 2f
+                setDrawValues(false)
+            }
+            chart.data = LineData(dataSet)
+            chart.invalidate()
         }
-
-        // Y軸
-        drawLine(
-            color = Color.Gray,
-            start = Offset(paddingLeft, paddingTop),
-            end = Offset(paddingLeft, paddingTop + graphHeight),
-            strokeWidth = 2f
-        )
-
-        // X軸
-        drawLine(
-            color = Color.Gray,
-            start = Offset(paddingLeft, paddingTop + graphHeight),
-            end = Offset(width - paddingRight, paddingTop + graphHeight),
-            strokeWidth = 2f
-        )
-
-        // グラフ線
-        for (i in 0 until records.size - 1) {
-            val (t1, l1) = records[i]
-            val (t2, l2) = records[i + 1]
-
-            drawLine(
-                color = Color.Red,
-                start = Offset(mapX(t1), mapY(l1)),
-                end = Offset(mapX(t2), mapY(l2)),
-                strokeWidth = 4f
-            )
-        }
-    }
+    )
 }
