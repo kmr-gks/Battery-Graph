@@ -31,20 +31,14 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
                 legend.isEnabled = false
                 axisRight.isEnabled = false
                 xAxis.position = XAxis.XAxisPosition.BOTTOM
-
-                // ピンチズーム
-                setPinchZoom(true)
-                //X方向のみズーム可能
                 isScaleXEnabled = true
                 isScaleYEnabled = false
-                // X方向スクロール（横スクロール）
                 isDragEnabled = true
-                // タッチ有効化
+                setPinchZoom(true)
                 setTouchEnabled(true)
-                // 慣性スクロール（スムーズ）
                 setDragDecelerationFrictionCoef(0.9f)
-                // スクロール制限（任意）
                 setVisibleXRangeMinimum(10f) // 最小表示範囲
+
                 xAxis.apply {
                     position = XAxis.XAxisPosition.BOTTOM
 
@@ -53,13 +47,10 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
 
                         private val timeFormat = SimpleDateFormat("HH:mm", Locale.JAPAN)
                         private val dateFormat = SimpleDateFormat("MM/dd", Locale.JAPAN)
-
                         private var lastDate: String? = null
 
                         override fun getFormattedValue(value: Float): String {
-
                             val date = Date(value.toLong())
-
                             val currentDate = dateFormat.format(date)
                             val time = timeFormat.format(date)
 
