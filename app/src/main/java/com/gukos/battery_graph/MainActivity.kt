@@ -1,6 +1,8 @@
 package com.gukos.battery_graph
 
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,13 +20,18 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.gukos.battery_graph.ui.viewmodel.BatteryViewModel
 import com.gukos.battery_graph.ui.viewmodel.BatteryViewModelFactory
+import com.gukos.battery_graph.util.BatteryReceiver
 import com.gukos.battery_graph.worker.BatteryWorker
 import java.util.Date
 
 class MainActivity : ComponentActivity() {
-	override fun onCreate(savedInstanceState: Bundle?) {
-		super.onCreate(savedInstanceState)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         scheduleBatteryWorker(applicationContext)
+
+        val receiver = BatteryReceiver()
+        val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+        registerReceiver(receiver, filter)
 
         setContent {
             val viewModel: BatteryViewModel = viewModel(
@@ -35,22 +42,23 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-	@Composable
-fun BatteryScreen(viewModel: BatteryViewModel) {
-    val records by viewModel.records.collectAsState()
+    @Composable
+    fun BatteryScreen(viewModel: BatteryViewModel) {
+        val records by viewModel.records.collectAsState()
 
-    Column {
-        Button(onClick = { viewModel.recordNow() }) {
-            Text("記録する")
-        }
+        Column {
+            Button(onClick = { viewModel.recordNow() }) {
+                Text("記録する")
+            }
 
-        LazyColumn {
-            items(records) { record ->
-                Text("${Date(record.timestamp)}: ${record.level}%")
+            LazyColumn {
+                items(records) { record ->
+                    Text("${Date(record.timestamp)}: ${record.level}%")
+                }
             }
         }
     }
-}
+
     private fun scheduleBatteryWorker(context: Context) {
 
         val workRequest =
