@@ -1,7 +1,7 @@
 plugins {
 	id("com.android.application")
 	id("org.jetbrains.kotlin.plugin.compose")
-	id("com.android.legacy-kapt")
+	id("com.google.devtools.ksp") version "2.1.0-1.0.29"
 }
 
 android {
@@ -79,5 +79,5 @@ dependencies {
 	androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 	debugImplementation("androidx.compose.ui:ui-tooling")
 	debugImplementation("androidx.compose.ui:ui-test-manifest")
-	kapt("androidx.room:room-compiler:2.8.4")
+	ksp("androidx.room:room-compiler:2.8.4")
 }
