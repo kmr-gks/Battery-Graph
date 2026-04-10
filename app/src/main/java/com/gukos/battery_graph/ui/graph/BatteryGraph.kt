@@ -3,7 +3,13 @@ package com.gukos.battery_graph.ui.graph
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
@@ -13,26 +19,41 @@ import com.gukos.battery_graph.data.entity.BatteryRecord
 @Composable
 fun BatteryGraph(recordsList: List<BatteryRecord>) {
 
-    val records = recordsList.map { it.timestamp to it.level }
-    Log.e("BatteryGraph", "records: ${records.size}")
-    Log.e("BatteryGraph", "records: $records")
+    val records = remember(recordsList) {
+        recordsList
+            .sortedBy { it.timestamp }
+            .map { it.timestamp to it.level }
+    }
 
-    if (records.isEmpty()) return
+    if (records.size < 2) return
 
-    Canvas(modifier = Modifier.fillMaxSize()) {
+    var scale by remember { mutableStateOf(1f) }
+    var offsetX by remember { mutableStateOf(0f) }
+
+    val transformState = rememberTransformableState { zoomChange, panChange, _ ->
+        scale = (scale * zoomChange).coerceIn(1f, 5f) // 最大5倍ズーム
+        offsetX += panChange.x
+    }
+
+    Canvas(
+        modifier = Modifier
+            .fillMaxSize()
+            .transformable(state = transformState)
+    ) {
 
         val width = size.width
         val height = size.height
 
-        val minX = records.first().first.toFloat()
-        val maxX = records.last().first.toFloat()
-        val rangeX = maxX - minX
+        val minX = records.first().first.toDouble()
+        val maxX = records.last().first.toDouble()
+        val rangeX = (maxX - minX).coerceAtLeast(1.0)
 
         val maxY = 100f
         val minY = 0f
 
         fun mapX(t: Long): Float {
-            return ((t - minX) / rangeX) * width
+            val base = (((t.toDouble() - minX) / rangeX) * width).toFloat()
+            return base * scale + offsetX
         }
 
         fun mapY(level: Int): Float {
@@ -40,14 +61,14 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
         }
 
         for (i in 0 until records.size - 1) {
-            val p1 = records[i]
-            val p2 = records[i + 1]
+            val (t1, l1) = records[i]
+            val (t2, l2) = records[i + 1]
 
             drawLine(
-                color = Color.Green,
-                start = Offset(mapX(p1.first), mapY(p1.second)),
-                end = Offset(mapX(p2.first), mapY(p2.second)),
-                strokeWidth = 6f
+                color = Color.Red,
+                start = Offset(mapX(t1), mapY(l1)),
+                end = Offset(mapX(t2), mapY(l2)),
+                strokeWidth = 4f
             )
         }
     }
