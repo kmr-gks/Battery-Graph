@@ -34,9 +34,10 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
     var offsetX by remember { mutableStateOf(0f) }
 
     val transformState = rememberTransformableState { zoomChange, panChange, _ ->
-        scale = (scale * zoomChange).coerceIn(1f, 5f) // 最大5倍ズーム
+        scale = (scale * zoomChange).coerceIn(1f, 5f)
         offsetX += panChange.x
     }
+
     val textMeasurer = rememberTextMeasurer()
 
     Canvas(
@@ -48,11 +49,16 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
         val width = size.width
         val height = size.height
 
+        // =========================
+        // ★余白を追加
+        // =========================
         val paddingLeft = 80f
+        val paddingRight = 20f
+        val paddingTop = 40f
         val paddingBottom = 60f
 
-        val graphWidth = width - paddingLeft
-        val graphHeight = height - paddingBottom
+        val graphWidth = width - paddingLeft - paddingRight
+        val graphHeight = height - paddingTop - paddingBottom
 
         val minX = records.first().first.toDouble()
         val maxX = records.last().first.toDouble()
@@ -62,24 +68,24 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
         val minY = 0f
 
         fun mapX(t: Long): Float {
-            val base = (((t.toDouble() - minX) / rangeX) * width).toFloat()
-            return base * scale + offsetX
+            val base = (((t.toDouble() - minX) / rangeX) * graphWidth).toFloat()
+            return base * scale + paddingLeft + offsetX
         }
 
         fun mapY(level: Int): Float {
-            return height - ((level - minY) / (maxY - minY) * height)
+            return paddingTop + graphHeight -
+                    ((level - minY) / (maxY - minY) * graphHeight)
         }
 
         // =========================
-        // Y軸・目盛り＋数字
+        // Y軸目盛り＋数字
         // =========================
 
         val steps = 5
         for (i in 0..steps) {
             val value = i * 20
-            val y = graphHeight - (value / 100f) * graphHeight
+            val y = paddingTop + graphHeight - (value / 100f) * graphHeight
 
-            // ★数字（ここが追加）
             val textLayout = textMeasurer.measure(
                 text = "$value%",
                 style = TextStyle(fontSize = 12.sp, color = Color.Gray)
@@ -89,40 +95,32 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
                 textLayoutResult = textLayout,
                 topLeft = Offset(10f, y - textLayout.size.height / 2)
             )
+
+            drawLine(
+                color = Color.LightGray,
+                start = Offset(paddingLeft, y),
+                end = Offset(width - paddingRight, y),
+                strokeWidth = 1f
+            )
         }
 
         // Y軸
         drawLine(
             color = Color.Gray,
-            start = Offset(paddingLeft, 0f),
-            end = Offset(paddingLeft, graphHeight),
+            start = Offset(paddingLeft, paddingTop),
+            end = Offset(paddingLeft, paddingTop + graphHeight),
             strokeWidth = 2f
         )
 
         // X軸
         drawLine(
             color = Color.Gray,
-            start = Offset(paddingLeft, graphHeight),
-            end = Offset(width, graphHeight),
+            start = Offset(paddingLeft, paddingTop + graphHeight),
+            end = Offset(width - paddingRight, paddingTop + graphHeight),
             strokeWidth = 2f
         )
 
-        // =========================
-        // Y軸目盛り（0〜100）
-        // =========================
-
-        for (i in 0..steps) {
-            val yValue = i * 20
-            val y = graphHeight - (yValue / 100f) * graphHeight
-
-            drawLine(
-                color = Color.LightGray,
-                start = Offset(paddingLeft, y),
-                end = Offset(width, y),
-                strokeWidth = 1f
-            )
-        }
-
+        // グラフ線
         for (i in 0 until records.size - 1) {
             val (t1, l1) = records[i]
             val (t2, l2) = records[i + 1]
