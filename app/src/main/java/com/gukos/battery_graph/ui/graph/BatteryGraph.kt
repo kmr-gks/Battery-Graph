@@ -17,6 +17,9 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.sp
 import com.gukos.battery_graph.data.entity.BatteryRecord
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 @Composable
@@ -101,6 +104,43 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
                 start = Offset(paddingLeft, y),
                 end = Offset(width - paddingRight, y),
                 strokeWidth = 1f
+            )
+        }
+
+        // =========================
+        // X軸メモリ（時間）
+        // =========================
+
+        val xSteps = 5
+        val dateFormat = SimpleDateFormat("HH:mm", Locale.JAPAN)
+
+        for (i in 0..xSteps) {
+
+            val t = minX + (rangeX * i / xSteps)
+            val x = mapX(t.toLong())
+
+            // 目盛り線
+            drawLine(
+                color = Color.LightGray,
+                start = Offset(x, paddingTop),
+                end = Offset(x, paddingTop + graphHeight),
+                strokeWidth = 1f
+            )
+
+            // 時間テキスト
+            val timeText = dateFormat.format(Date(t.toLong()))
+
+            val textLayout = textMeasurer.measure(
+                text = timeText,
+                style = TextStyle(fontSize = 12.sp, color = Color.Gray)
+            )
+
+            drawText(
+                textLayoutResult = textLayout,
+                topLeft = Offset(
+                    x - textLayout.size.width / 2,
+                    paddingTop + graphHeight + 5f
+                )
             )
         }
 
