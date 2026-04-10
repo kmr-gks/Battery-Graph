@@ -26,35 +26,37 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
         modifier = Modifier.fillMaxSize(), // ← これが重要
         factory = { context ->
             LineChart(context).apply {
-                layoutParams = android.widget.FrameLayout.LayoutParams(
-                    android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-                    android.widget.FrameLayout.LayoutParams.MATCH_PARENT
-                )
-
-                xAxis.position = XAxis.XAxisPosition.BOTTOM
-                axisRight.isEnabled = false
                 description.isEnabled = false
                 legend.isEnabled = false
+                axisRight.isEnabled = false
+                xAxis.position = XAxis.XAxisPosition.BOTTOM
 
-                setTouchEnabled(true)
+                // ピンチズーム
                 setPinchZoom(true)
-                setScaleEnabled(true)
+                //X方向のみズーム可能
+                isScaleXEnabled=true
+                isScaleYEnabled=false
+                // X方向スクロール（横スクロール）
+                isDragEnabled = true
+                // タッチ有効化
+                setTouchEnabled(true)
+                // 慣性スクロール（スムーズ）
+                setDragDecelerationFrictionCoef(0.9f)
+                // スクロール制限（任意）
+                setVisibleXRangeMinimum(10f) // 最小表示範囲
             }
         },
         update = { chart ->
-
             val entries = recordsList
                 .sortedBy { it.timestamp }
                 .map {
                     Entry(it.timestamp.toFloat(), it.level.toFloat())
                 }
-
             val dataSet = LineDataSet(entries, "Battery").apply {
                 color = Color.GREEN
                 setDrawCircles(false)
                 lineWidth = 2f
             }
-
             chart.data = LineData(dataSet)
             chart.invalidate()
         }
