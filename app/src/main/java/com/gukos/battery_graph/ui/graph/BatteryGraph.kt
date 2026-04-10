@@ -35,8 +35,8 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
                 // ピンチズーム
                 setPinchZoom(true)
                 //X方向のみズーム可能
-                isScaleXEnabled=true
-                isScaleYEnabled=false
+                isScaleXEnabled = true
+                isScaleYEnabled = false
                 // X方向スクロール（横スクロール）
                 isDragEnabled = true
                 // タッチ有効化
@@ -45,6 +45,36 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
                 setDragDecelerationFrictionCoef(0.9f)
                 // スクロール制限（任意）
                 setVisibleXRangeMinimum(10f) // 最小表示範囲
+                xAxis.apply {
+                    position = XAxis.XAxisPosition.BOTTOM
+
+                    // ★これを追加
+                    valueFormatter = object : ValueFormatter() {
+
+                        private val timeFormat = SimpleDateFormat("HH:mm", Locale.JAPAN)
+                        private val dateFormat = SimpleDateFormat("MM/dd", Locale.JAPAN)
+
+                        private var lastDate: String? = null
+
+                        override fun getFormattedValue(value: Float): String {
+
+                            val date = Date(value.toLong())
+
+                            val currentDate = dateFormat.format(date)
+                            val time = timeFormat.format(date)
+
+                            return if (currentDate != lastDate) {
+                                lastDate = currentDate
+                                "$time\n$currentDate"
+                            } else {
+                                time
+                            }
+                        }
+                    }
+
+                    granularity = 15 * 60 * 1000f // 15分単位（ズレ防止）
+                    setLabelCount(6, true)
+                }
             }
         },
         update = { chart ->
