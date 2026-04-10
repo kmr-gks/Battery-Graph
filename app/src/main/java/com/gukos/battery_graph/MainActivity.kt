@@ -1,6 +1,8 @@
 package com.gukos.battery_graph
 
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -23,6 +25,7 @@ import androidx.work.WorkManager
 import com.gukos.battery_graph.ui.graph.GraphScreen
 import com.gukos.battery_graph.ui.viewmodel.BatteryViewModel
 import com.gukos.battery_graph.ui.viewmodel.BatteryViewModelFactory
+import com.gukos.battery_graph.util.BatteryReceiver
 import com.gukos.battery_graph.worker.BatteryWorker
 import java.util.Date
 
@@ -30,6 +33,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         scheduleBatteryWorker(applicationContext)
+
+        val receiver = BatteryReceiver()
+        val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+        registerReceiver(receiver, filter)
 
         setContent {
             val viewModel: BatteryViewModel = viewModel(
