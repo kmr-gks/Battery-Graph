@@ -42,6 +42,8 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
                 xAxis.apply {
                     position = XAxis.XAxisPosition.BOTTOM
 
+                    // ★これで「グリッドと一緒に動く」
+                    setDrawGridLines(true)
                     // ★これを追加
                     valueFormatter = object : ValueFormatter() {
 
@@ -62,9 +64,6 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
                             }
                         }
                     }
-
-                    granularity = 15 * 60 * 1000f // 15分単位（ズレ防止）
-                    setLabelCount(6, true)
                 }
             }
         },
