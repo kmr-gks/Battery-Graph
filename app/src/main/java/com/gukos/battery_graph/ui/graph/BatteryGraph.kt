@@ -75,7 +75,7 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
                     Entry(it.timestamp.toFloat(), it.level.toFloat())
                 }
             val dataSet = LineDataSet(entries, "Battery").apply {
-                color = Color.GREEN
+                color = Color.RED
                 setDrawCircles(false)
                 lineWidth = 2f
                 setDrawValues(false)
