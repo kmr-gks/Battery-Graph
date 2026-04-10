@@ -4,9 +4,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -14,10 +17,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.gukos.battery_graph.ui.graph.GraphScreen
 import com.gukos.battery_graph.ui.viewmodel.BatteryViewModel
 import com.gukos.battery_graph.ui.viewmodel.BatteryViewModelFactory
 import com.gukos.battery_graph.util.BatteryReceiver
@@ -38,7 +43,16 @@ class MainActivity : ComponentActivity() {
                 factory = BatteryViewModelFactory(applicationContext)
             )
 
-            BatteryScreen(viewModel)
+            Column(modifier = Modifier.fillMaxSize()) {
+
+                Box(modifier = Modifier.weight(1f)) {
+                    GraphScreen(viewModel)
+                }
+
+                Box(modifier = Modifier.weight(1f)) {
+                    BatteryScreen(viewModel)
+                }
+            }
         }
     }
 
