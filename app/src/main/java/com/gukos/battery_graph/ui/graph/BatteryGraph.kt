@@ -111,7 +111,7 @@ fun BatteryGraph(recordsList: List<BatteryRecord>) {
         // X軸メモリ（時間）
         // =========================
 
-        val xSteps = 5
+        val xSteps = (4 * scale).toInt().coerceIn(4, 40)
         val dateFormat = SimpleDateFormat("HH:mm", Locale.JAPAN)
 
         for (i in 0..xSteps) {
