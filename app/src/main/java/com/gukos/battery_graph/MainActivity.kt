@@ -49,7 +49,7 @@ class MainActivity : ComponentActivity() {
                     GraphScreen(viewModel)
                 }
 
-                Box(modifier = Modifier.weight(1f)) {
+                Box(modifier = Modifier.weight(0.31f)) {
                     BatteryScreen(viewModel)
                 }
             }
