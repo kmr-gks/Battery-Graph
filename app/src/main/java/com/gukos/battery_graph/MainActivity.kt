@@ -1,6 +1,5 @@
 package com.gukos.battery_graph
 
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
@@ -22,32 +21,27 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import com.gukos.battery_graph.ui.graph.GraphScreen
 import com.gukos.battery_graph.ui.theme.BatteryGraphTheme
 import com.gukos.battery_graph.ui.viewmodel.BatteryViewModel
 import com.gukos.battery_graph.ui.viewmodel.BatteryViewModelFactory
 import com.gukos.battery_graph.util.BatteryReceiver
-import com.gukos.battery_graph.worker.BatteryWorker
 import java.util.Date
 
 class MainActivity : ComponentActivity() {
 
     private val viewModel: BatteryViewModel by viewModels {
-        BatteryViewModelFactory(applicationContext)
+        BatteryViewModelFactory((application as BatteryGraphApplication).repository)
     }
 
     // 画面表示中だけ残量の変化を受け取る（バックグラウンドの記録は WorkManager が担当）
-    private val batteryReceiver = BatteryReceiver { level ->
-        viewModel.onBatteryLevelChanged(level)
+    private val batteryReceiver = BatteryReceiver { snapshot ->
+        viewModel.onBatteryChanged(snapshot)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        scheduleBatteryWorker(applicationContext)
 
         setContent {
             BatteryGraphTheme {
@@ -97,23 +91,10 @@ class MainActivity : ComponentActivity() {
 
             LazyColumn {
                 items(records) { record ->
-                    Text("${Date(record.timestamp)}: ${record.level}%")
+                    val charging = if (record.isCharging == true) " (充電中)" else ""
+                    Text("${Date(record.timestamp)}: ${record.level}%$charging")
                 }
             }
         }
-    }
-
-    private fun scheduleBatteryWorker(context: Context) {
-
-        val workRequest =
-            PeriodicWorkRequestBuilder<BatteryWorker>(
-                15, java.util.concurrent.TimeUnit.MINUTES
-            ).build()
-
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            "battery_record_work",
-            ExistingPeriodicWorkPolicy.KEEP,
-            workRequest
-        )
     }
 }

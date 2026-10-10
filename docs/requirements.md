@@ -19,10 +19,10 @@
 
 ### 3.1 必須機能
 
-- [ ] バッテリー残量の取得と記録（例：5分間隔）
-- [ ] 残量変化をグラフで表示（時間 vs 残量）
-- [ ] 常駐処理（Foreground Serviceとして動作）
-- [ ] ローカルにデータを保存（SQLite or Room）
+- [x] バッテリー残量の取得と記録（WorkManagerで15分間隔。アプリ表示中は残量・充電状態の変化時にも記録）
+- [x] 充電状態・温度・電圧の記録
+- [x] 残量変化をグラフで表示（時間 vs 残量）
+- [x] ローカルにデータを保存（Room。90日より古い記録は自動削除）
 - [ ] 通知バーにバッテリー残量表示（オプション）
 
 ### 3.2 任意機能（後日追加可能）
@@ -47,7 +47,9 @@
 - UI: Android SDK（Jetpack Compose または XML）
 - データベース: Room または SQLite
 - グラフ表示ライブラリ: MPAndroidChart
-- 常駐処理: Foreground Service、または WorkManager（要比較）
+- バックグラウンド処理: WorkManager
+  - Foreground Service は Google Play の用途審査が厳しく、バッテリー監視目的では申請が通りにくいため採用しない
+  - WorkManager の最短間隔は15分。端末再起動後も自動で再開する
 
 ---
 

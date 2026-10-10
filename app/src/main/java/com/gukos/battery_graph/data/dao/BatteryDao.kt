@@ -15,4 +15,7 @@ interface BatteryDao {
 
     @Query("SELECT * FROM battery_records ORDER BY timestamp DESC LIMIT 1")
     suspend fun getLatest(): BatteryRecord?
+
+    @Query("DELETE FROM battery_records WHERE timestamp < :timestamp")
+    suspend fun deleteOlderThan(timestamp: Long): Int
 }

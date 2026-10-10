@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gukos.battery_graph.data.entity.BatteryRecord
 import com.gukos.battery_graph.repository.BatteryRepository
+import com.gukos.battery_graph.util.BatterySnapshot
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -25,9 +26,9 @@ class BatteryViewModel(
         }
     }
 
-    fun onBatteryLevelChanged(level: Int) {
+    fun onBatteryChanged(snapshot: BatterySnapshot) {
         viewModelScope.launch {
-            repository.recordIfLevelChanged(level)
+            repository.recordIfChanged(snapshot)
         }
     }
 }

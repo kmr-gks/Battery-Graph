@@ -1,11 +1,10 @@
 package com.gukos.battery_graph.worker
 
 import android.content.Context
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.gukos.battery_graph.data.database.AppDatabase
-import com.gukos.battery_graph.repository.BatteryRepository
-import com.gukos.battery_graph.util.BatteryManagerWrapper
+import com.gukos.battery_graph.BatteryGraphApplication
 
 
 class BatteryWorker(
@@ -14,14 +13,20 @@ class BatteryWorker(
 ) : CoroutineWorker(context, workerParams) {
 
     override suspend fun doWork(): Result {
+        val repository = (applicationContext as BatteryGraphApplication).repository
 
-        val db = AppDatabase.getDatabase(applicationContext)
-        val dao = db.batteryDao()
-        val wrapper = BatteryManagerWrapper(applicationContext)
-        val repository = BatteryRepository(dao, wrapper)
+        return try {
+            repository.recordBatteryLevel()
+            repository.deleteExpiredRecords()
+            Result.success()
+        } catch (e: Exception) {
+            Log.w(TAG, "battery record failed", e)
+            Result.retry()
+        }
+    }
 
-        repository.recordBatteryLevel()
-
-        return Result.success()
+    companion object {
+        const val WORK_NAME = "battery_record_work"
+        private const val TAG = "BatteryWorker"
     }
 }
