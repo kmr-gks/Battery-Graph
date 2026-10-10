@@ -18,7 +18,8 @@ class BatteryRepository(
     // 常駐サービス・画面・Worker から同時に呼ばれても「最新と比較して保存」が割り込まれないようにする
     private val writeMutex = Mutex()
 
-    fun getRecords(): Flow<List<BatteryRecord>> = dao.getAll()
+    /** from 以降の記録（古い順）。直前の1件も含む */
+    fun getRecordsSince(from: Long): Flow<List<BatteryRecord>> = dao.getSince(from)
 
     /** 現在の状態を無条件に記録する（定期記録・手動記録用） */
     suspend fun recordBatteryLevel() {

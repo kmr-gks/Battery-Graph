@@ -36,13 +36,25 @@ class BatteryDaoTest {
     }
 
     @Test
-    fun getAll_returnsNewestFirst() = runTest {
+    fun getSince_returnsOldestFirst() = runTest {
         dao.insert(BatteryRecord(timestamp = 2_000, level = 70))
         dao.insert(BatteryRecord(timestamp = 1_000, level = 80))
         dao.insert(BatteryRecord(timestamp = 3_000, level = 60))
 
-        assertEquals(listOf(60, 70, 80), dao.getAll().first().map { it.level })
+        assertEquals(listOf(80, 70, 60), dao.getSince(0).first().map { it.level })
     }
+
+    @Test
+    fun getSince_includesOneRecordBeforeFrom() = runTest {
+        dao.insert(BatteryRecord(timestamp = 1_000, level = 90))
+        dao.insert(BatteryRecord(timestamp = 2_000, level = 80))
+        dao.insert(BatteryRecord(timestamp = 3_000, level = 70))
+        dao.insert(BatteryRecord(timestamp = 4_000, level = 60))
+
+        // 2_500 より前の直近1件（2_000）から返す
+        assertEquals(listOf(80, 70, 60), dao.getSince(2_500).first().map { it.level })
+    }
+
 
     @Test
     fun getLatest_returnsNullWhenEmpty() = runTest {
@@ -68,6 +80,6 @@ class BatteryDaoTest {
         val deleted = dao.deleteOlderThan(1_000)
 
         assertEquals(1, deleted)
-        assertEquals(listOf(70, 80), dao.getAll().first().map { it.level })
+        assertEquals(listOf(80, 70), dao.getSince(0).first().map { it.level })
     }
 }

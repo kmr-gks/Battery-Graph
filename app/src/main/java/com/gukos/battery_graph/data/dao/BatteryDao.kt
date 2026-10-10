@@ -10,8 +10,19 @@ interface BatteryDao {
     @Insert
     suspend fun insert(record: BatteryRecord)
 
-    @Query("SELECT * FROM battery_records ORDER BY timestamp DESC")
-    fun getAll(): Flow<List<BatteryRecord>>
+    /**
+     * from 以降の記録を古い順に返す。グラフの左端まで線がつながるよう、from より前の直近1件も含める
+     */
+    @Query(
+        """
+        SELECT * FROM battery_records
+        WHERE timestamp >= (
+            SELECT COALESCE(MAX(timestamp), 0) FROM battery_records WHERE timestamp < :from
+        )
+        ORDER BY timestamp ASC
+        """
+    )
+    fun getSince(from: Long): Flow<List<BatteryRecord>>
 
     @Query("SELECT * FROM battery_records ORDER BY timestamp DESC LIMIT 1")
     suspend fun getLatest(): BatteryRecord?

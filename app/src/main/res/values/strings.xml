@@ -10,4 +10,20 @@
 
 	<string name="high_precision_label">高精度記録</string>
 	<string name="high_precision_description">残量が1%変わるたびに記録します（常に通知を表示）</string>
+
+	<string name="status_level">%1$d%%</string>
+	<string name="status_charging">充電中</string>
+	<string name="status_discharging">放電中</string>
+	<string name="status_details">%1$.1f℃ ・ %2$.2fV</string>
+	<string name="status_pace">減少ペース 約%1$.1f%%/時 ・ 残り約%2$s</string>
+	<string name="status_pace_unknown">減少ペースを計算中</string>
+	<string name="duration_hours_minutes">%1$d時間%2$d分</string>
+	<string name="duration_minutes">%1$d分</string>
+
+	<string name="period_6h">6時間</string>
+	<string name="period_24h">24時間</string>
+	<string name="period_7d">7日</string>
+	<string name="period_30d">30日</string>
+
+	<string name="graph_empty">記録が2件以上たまるとグラフを表示します</string>
 </resources>

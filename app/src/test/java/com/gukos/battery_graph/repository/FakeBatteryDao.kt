@@ -22,8 +22,12 @@ class FakeBatteryDao : BatteryDao {
         records.value = records.value + record.copy(id = nextId++)
     }
 
-    override fun getAll(): Flow<List<BatteryRecord>> =
-        records.map { list -> list.sortedByDescending { it.timestamp } }
+    override fun getSince(from: Long): Flow<List<BatteryRecord>> =
+        records.map { list ->
+            val sorted = list.sortedBy { it.timestamp }
+            val start = sorted.lastOrNull { it.timestamp < from }?.timestamp ?: 0L
+            sorted.filter { it.timestamp >= start }
+        }
 
     override suspend fun getLatest(): BatteryRecord? {
         val latest = records.value.maxByOrNull { it.timestamp }
