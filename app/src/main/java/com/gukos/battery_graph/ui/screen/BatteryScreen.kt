@@ -171,10 +171,11 @@ private fun HighPrecisionSwitch(viewModel: BatteryViewModel) {
     val context = LocalContext.current
     val enabled by viewModel.highPrecisionEnabled.collectAsState()
 
+    // 許可の前に出した通知は表示されないため、許可ダイアログの結果が出てからサービスを起動する。
     // 通知が許可されなくても記録は動く（通知が表示されないだけ）
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { }
+    ) { BatteryMonitorService.startIfEnabled(context) }
 
     fun setEnabled(value: Boolean) {
         viewModel.setHighPrecisionEnabled(value)
@@ -184,8 +185,9 @@ private fun HighPrecisionSwitch(viewModel: BatteryViewModel) {
                 != PackageManager.PERMISSION_GRANTED
             ) {
                 permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                BatteryMonitorService.startIfEnabled(context)
             }
-            BatteryMonitorService.startIfEnabled(context)
         } else {
             BatteryMonitorService.stop(context)
         }
