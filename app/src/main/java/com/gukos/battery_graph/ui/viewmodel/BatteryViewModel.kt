@@ -24,4 +24,10 @@ class BatteryViewModel(
             repository.recordBatteryLevel()
         }
     }
+
+    fun onBatteryLevelChanged(level: Int) {
+        viewModelScope.launch {
+            repository.recordIfLevelChanged(level)
+        }
+    }
 }

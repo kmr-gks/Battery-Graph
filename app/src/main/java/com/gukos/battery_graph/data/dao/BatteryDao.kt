@@ -12,4 +12,7 @@ interface BatteryDao {
 
     @Query("SELECT * FROM battery_records ORDER BY timestamp DESC")
     fun getAll(): Flow<List<BatteryRecord>>
+
+    @Query("SELECT * FROM battery_records ORDER BY timestamp DESC LIMIT 1")
+    suspend fun getLatest(): BatteryRecord?
 }

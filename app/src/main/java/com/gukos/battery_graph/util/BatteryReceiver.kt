@@ -4,30 +4,22 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.BatteryManager
-import android.util.Log
-import com.gukos.battery_graph.data.database.AppDatabase
-import com.gukos.battery_graph.repository.BatteryRepository
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
-class BatteryReceiver : BroadcastReceiver() {
+/**
+ * ACTION_BATTERY_CHANGED を受け取り、残量(%)をコールバックに渡す。
+ * このブロードキャストは Manifest では受信できないため、画面表示中に動的登録して使う。
+ */
+class BatteryReceiver(
+    private val onLevelChanged: (Int) -> Unit
+) : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action != Intent.ACTION_BATTERY_CHANGED) return
 
-        if (intent.action == Intent.ACTION_BATTERY_CHANGED) {
+        val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+        val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+        if (level < 0 || scale <= 0) return
 
-            val level = intent.getIntExtra(
-                BatteryManager.EXTRA_LEVEL, -1
-            )
-            Log.d("tag", "percent=$level")
-
-            val db = AppDatabase.getDatabase(context)
-            val repository = BatteryRepository(db.batteryDao(), BatteryManagerWrapper(context))
-
-            CoroutineScope(Dispatchers.IO).launch {
-                repository.recordBatteryLevel()
-            }
-        }
+        onLevelChanged(level * 100 / scale)
     }
 }
