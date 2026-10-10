@@ -21,3 +21,5 @@ local.properties
 # 署名鍵（GitHub Secrets から CI で復元する）
 *.keystore
 *.jks
+# 動画ファイル
+*.mp4
