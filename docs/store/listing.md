@@ -9,6 +9,7 @@ Play Console に入力する内容をまとめたものです。日本語（ja-J
 | アプリ名（30文字以内） | Charge Trail: Battery Graph |
 | ホーム画面の表示名 | Charge Trail |
 | パッケージ名 | com.gukos.battery_graph |
+| 既定の言語 | 英語（en-US）。日本語（ja-JP）を翻訳として追加 |
 | カテゴリ | ツール |
 | 料金 | 無料（広告なし・アプリ内購入なし） |
 | プライバシーポリシー URL | https://github.com/kmr-gks/Battery-Graph/blob/main/docs/privacy-policy.md |
@@ -129,11 +130,26 @@ Battery level changes that happen while the service is stopped are not recorded,
 | 項目 | 回答 |
 |---|---|
 | 広告 | 含まない |
+| 広告 ID | 使用しない（AD_ID 権限なし） |
+| 政府機関のアプリ | いいえ |
 | アプリへのアクセス | すべての機能を制限なく利用できる（ログイン不要） |
 | コンテンツのレーティング | カテゴリ「ユーティリティ、生産性、コミュニケーション、その他」。暴力・性的表現などの質問はすべて「いいえ」 |
 | ターゲット年齢層 | 13歳以上を推奨（13歳未満を含めるとファミリー向けポリシーの審査対象になる） |
 | ニュースアプリ | いいえ |
 | 健康・金融などの特殊な機能 | なし |
+
+## リリースノート（初回）
+
+Play Console のリリース作成画面にそのまま貼り付けられる形式です（各言語500文字以内）。
+
+```
+<en-US>
+First release: battery history graph, highlighted charging periods, drain rate and estimated time left, and optional high-precision recording.
+</en-US>
+<ja-JP>
+初回リリース。バッテリー残量の履歴グラフ、充電区間の色分け、減少ペースと残り時間の目安、高精度記録に対応しました。
+</ja-JP>
+```
 
 ## 公開までの流れ
 
