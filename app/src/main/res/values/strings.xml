@@ -1,29 +1,29 @@
 <resources>
-	<string name="app_name">Battery-Graph</string>
+	<string name="app_name" translatable="false">Charge Trail</string>
 
-	<string name="monitor_channel_name">高精度記録</string>
-	<string name="monitor_channel_description">バッテリー残量の変化を記録している間、残量を表示します</string>
-	<string name="monitor_notification_title">残量 %1$d%%</string>
-	<string name="monitor_notification_title_charging">残量 %1$d%%（充電中）</string>
-	<string name="monitor_notification_title_unknown">バッテリー残量を記録中</string>
-	<string name="monitor_notification_text">残量が変わるたびに記録しています</string>
+	<string name="monitor_channel_name">High-precision recording</string>
+	<string name="monitor_channel_description">Shows the battery level while its changes are being recorded</string>
+	<string name="monitor_notification_title">Battery %1$d%%</string>
+	<string name="monitor_notification_title_charging">Battery %1$d%% (charging)</string>
+	<string name="monitor_notification_title_unknown">Recording battery level</string>
+	<string name="monitor_notification_text">Recording each time the level changes</string>
 
-	<string name="high_precision_label">高精度記録</string>
-	<string name="high_precision_description">残量が1%変わるたびに記録します（常に通知を表示）</string>
+	<string name="high_precision_label">High-precision recording</string>
+	<string name="high_precision_description" formatted="false">Records every 1% change (shows a persistent notification)</string>
 
-	<string name="status_level">%1$d%%</string>
-	<string name="status_charging">充電中</string>
-	<string name="status_discharging">放電中</string>
-	<string name="status_details">%1$.1f℃ ・ %2$.2fV</string>
-	<string name="status_pace">減少ペース 約%1$.1f%%/時 ・ 残り約%2$s</string>
-	<string name="status_pace_unknown">減少ペースを計算中</string>
-	<string name="duration_hours_minutes">%1$d時間%2$d分</string>
-	<string name="duration_minutes">%1$d分</string>
+	<string name="status_level" translatable="false">%1$d%%</string>
+	<string name="status_charging">Charging</string>
+	<string name="status_discharging">Discharging</string>
+	<string name="status_details" translatable="false">%1$.1f℃ ・ %2$.2fV</string>
+	<string name="status_pace">Draining about %1$.1f%%/h ・ about %2$s left</string>
+	<string name="status_pace_unknown">Calculating drain rate</string>
+	<string name="duration_hours_minutes">%1$dh %2$dm</string>
+	<string name="duration_minutes">%1$dm</string>
 
-	<string name="period_6h">6時間</string>
-	<string name="period_24h">24時間</string>
-	<string name="period_7d">7日</string>
-	<string name="period_30d">30日</string>
+	<string name="period_6h">6h</string>
+	<string name="period_24h">24h</string>
+	<string name="period_7d">7d</string>
+	<string name="period_30d">30d</string>
 
-	<string name="graph_empty">記録が2件以上たまるとグラフを表示します</string>
+	<string name="graph_empty">The graph appears once two or more records are saved</string>
 </resources>

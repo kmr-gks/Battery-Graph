@@ -18,3 +18,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+# 署名鍵（GitHub Secrets から CI で復元する）
+*.keystore
+*.jks

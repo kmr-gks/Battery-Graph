@@ -13,8 +13,9 @@ android {
 		applicationId = "com.gukos.battery_graph"
 		minSdk = 24
 		targetSdk = 36
-		versionCode = 1
-		versionName = "1.0"
+		// CI では実行番号を渡して、アップロードごとに versionCode を増やす（Play は同じ値を受け付けない）
+		versionCode = System.getenv("VERSION_CODE")?.toInt() ?: 1
+		versionName = System.getenv("VERSION_NAME") ?: "1.0"
 
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 		vectorDrawables {
@@ -23,7 +24,7 @@ android {
 	}
 	signingConfigs {
 		create("release") {
-			storeFile = file("release.keystore")
+			storeFile = file(System.getenv("KEYSTORE_PATH") ?: "release.keystore")
 			storePassword = System.getenv("KEYSTORE_PASSWORD")
 			keyAlias = System.getenv("KEY_ALIAS")
 			keyPassword = System.getenv("KEY_PASSWORD")
@@ -31,7 +32,8 @@ android {
 	}
 	buildTypes {
 		release {
-			isMinifyEnabled = false
+			isMinifyEnabled = true
+			isShrinkResources = true
 			proguardFiles(
 				getDefaultProguardFile("proguard-android-optimize.txt"),
 				"proguard-rules.pro"
@@ -45,6 +47,12 @@ android {
 	}
 	buildFeatures {
 		compose = true
+	}
+	androidResources {
+		// 端末設定の「アプリの言語」（Android 13 以降）に en / ja を表示する
+		generateLocaleConfig = true
+		// ライブラリが含む他言語のリソースを除き、アプリが対応する言語だけを残す
+		localeFilters += listOf("en", "ja")
 	}
 	packaging {
 		resources {
