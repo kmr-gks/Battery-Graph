@@ -9,7 +9,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.gukos.battery_graph.data.dao.BatteryDao
 import com.gukos.battery_graph.data.entity.BatteryRecord
 
-@Database(entities = [BatteryRecord::class], version = 2, exportSchema = false)
+@Database(entities = [BatteryRecord::class], version = 2, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun batteryDao(): BatteryDao

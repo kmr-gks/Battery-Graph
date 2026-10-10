@@ -2,6 +2,7 @@ plugins {
 	id("com.android.application")
 	id("org.jetbrains.kotlin.plugin.compose")
 	id("com.google.devtools.ksp")
+	id("androidx.room")
 }
 
 android {
@@ -52,6 +53,11 @@ android {
 	}
 }
 
+room {
+	// マイグレーションテスト用にスキーマを JSON で保存する（git 管理する）
+	schemaDirectory("$projectDir/schemas")
+}
+
 kotlin {
 	compilerOptions {
 		jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
@@ -75,11 +81,20 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.4.0")
 	implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
     testImplementation("junit:junit:4.13.2")
+	testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
 	androidTestImplementation("androidx.test.ext:junit:1.3.0")
 	androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+	androidTestImplementation("androidx.room:room-testing:2.8.4")
+	androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
 	androidTestImplementation(platform("androidx.compose:compose-bom:2026.03.01"))
 	androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 	debugImplementation("androidx.compose.ui:ui-tooling")
 	debugImplementation("androidx.compose.ui:ui-test-manifest")
 	ksp("androidx.room:room-compiler:2.8.4")
+
+	constraints {
+		// room-testing は serialization-json 1.8.1 を使うが、アプリ側の core は 1.7.3 に固定され
+		// テスト実行時に AbstractMethodError になるため、core のバージョンをそろえる
+		implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1")
+	}
 }

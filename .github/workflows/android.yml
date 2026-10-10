@@ -36,6 +36,10 @@ jobs:
       - name: Run lint
         run: ./gradlew lint
 
+      # 🧪 単体テスト
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest
+
       # 🛠 コンパイル（デバッグ）
       - name: Build Debug APK
         run: ./gradlew assembleDebug

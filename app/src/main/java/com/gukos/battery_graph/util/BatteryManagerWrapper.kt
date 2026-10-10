@@ -5,10 +5,10 @@ import android.content.Intent
 import android.content.IntentFilter
 import androidx.core.content.ContextCompat
 
-class BatteryManagerWrapper(private val context: Context) {
+class BatteryManagerWrapper(private val context: Context) : BatteryStatusSource {
 
     /** 現在のバッテリー状態。ACTION_BATTERY_CHANGED は sticky なので receiver なしで最新値を取得できる */
-    fun getSnapshot(): BatterySnapshot? {
+    override fun getSnapshot(): BatterySnapshot? {
         val intent = ContextCompat.registerReceiver(
             context,
             null,
