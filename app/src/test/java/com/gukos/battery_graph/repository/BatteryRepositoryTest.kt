@@ -2,6 +2,7 @@ package com.gukos.battery_graph.repository
 
 import com.gukos.battery_graph.data.entity.BatteryRecord
 import com.gukos.battery_graph.util.BatterySnapshot
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -106,6 +107,18 @@ class BatteryRepositoryTest {
         repository.recordIfChanged(snapshot(level = 80, isCharging = false))
 
         assertEquals(2, dao.all.size)
+    }
+
+    @Test
+    fun recordIfChanged_concurrentCallsSaveOnlyOnce() = runTest {
+        // 常駐サービスと画面の Receiver が同じ変化をほぼ同時に受け取る場合
+        dao.yieldInGetLatest = true
+
+        launch { repository.recordIfChanged(snapshot(level = 80)) }
+        launch { repository.recordIfChanged(snapshot(level = 80)) }
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(1, dao.all.size)
     }
 
     // --- deleteExpiredRecords ---

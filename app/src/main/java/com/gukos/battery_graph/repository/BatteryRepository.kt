@@ -5,6 +5,8 @@ import com.gukos.battery_graph.data.entity.BatteryRecord
 import com.gukos.battery_graph.util.BatteryStatusSource
 import com.gukos.battery_graph.util.BatterySnapshot
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.TimeUnit
 
 class BatteryRepository(
@@ -13,18 +15,24 @@ class BatteryRepository(
     private val now: () -> Long = System::currentTimeMillis
 ) {
 
+    // 常駐サービス・画面・Worker から同時に呼ばれても「最新と比較して保存」が割り込まれないようにする
+    private val writeMutex = Mutex()
+
     fun getRecords(): Flow<List<BatteryRecord>> = dao.getAll()
 
     /** 現在の状態を無条件に記録する（定期記録・手動記録用） */
     suspend fun recordBatteryLevel() {
-        batteryStatus.getSnapshot()?.let { insert(it) }
+        val snapshot = batteryStatus.getSnapshot() ?: return
+        writeMutex.withLock { insert(snapshot) }
     }
 
     // BATTERY_CHANGED は電圧・温度の変化でも頻繁に届くため、残量か充電状態が変わったときだけ記録する
     suspend fun recordIfChanged(snapshot: BatterySnapshot) {
-        val latest = dao.getLatest()
-        if (latest?.level == snapshot.level && latest.isCharging == snapshot.isCharging) return
-        insert(snapshot)
+        writeMutex.withLock {
+            val latest = dao.getLatest()
+            if (latest?.level == snapshot.level && latest.isCharging == snapshot.isCharging) return
+            insert(snapshot)
+        }
     }
 
     /** 保持期間を過ぎた記録を削除し、削除件数を返す */

@@ -1,3 +1,13 @@
 <resources>
 	<string name="app_name">Battery-Graph</string>
+
+	<string name="monitor_channel_name">高精度記録</string>
+	<string name="monitor_channel_description">バッテリー残量の変化を記録している間、残量を表示します</string>
+	<string name="monitor_notification_title">残量 %1$d%%</string>
+	<string name="monitor_notification_title_charging">残量 %1$d%%（充電中）</string>
+	<string name="monitor_notification_title_unknown">バッテリー残量を記録中</string>
+	<string name="monitor_notification_text">残量が変わるたびに記録しています</string>
+
+	<string name="high_precision_label">高精度記録</string>
+	<string name="high_precision_description">残量が1%変わるたびに記録します（常に通知を表示）</string>
 </resources>

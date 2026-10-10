@@ -19,11 +19,13 @@
 
 ### 3.1 必須機能
 
-- [x] バッテリー残量の取得と記録（WorkManagerで15分間隔。アプリ表示中は残量・充電状態の変化時にも記録）
+- [x] バッテリー残量の取得と記録
+  - 高精度記録（設定でON/OFF）：常駐サービスで残量・充電状態が変わるたびに記録
+  - 通常：WorkManagerで15分間隔。アプリ表示中は残量・充電状態の変化時にも記録
 - [x] 充電状態・温度・電圧の記録
 - [x] 残量変化をグラフで表示（時間 vs 残量）
 - [x] ローカルにデータを保存（Room。90日より古い記録は自動削除）
-- [ ] 通知バーにバッテリー残量表示（オプション）
+- [x] 通知バーにバッテリー残量表示（高精度記録ON時の常駐通知）
 
 ### 3.2 任意機能（後日追加可能）
 
@@ -47,9 +49,12 @@
 - UI: Android SDK（Jetpack Compose または XML）
 - データベース: Room または SQLite
 - グラフ表示ライブラリ: MPAndroidChart
-- バックグラウンド処理: WorkManager
-  - Foreground Service は Google Play の用途審査が厳しく、バッテリー監視目的では申請が通りにくいため採用しない
-  - WorkManager の最短間隔は15分。端末再起動後も自動で再開する
+- バックグラウンド処理: Foreground Service（任意）+ WorkManager
+  - ACTION_BATTERY_CHANGED は Manifest で受信できないため、変化のたびに記録するにはプロセスを常駐させる必要がある
+  - Foreground Service は type=specialUse。Google Play Console で用途の申告と動画の提出が必要で、審査で認められない可能性がある
+    - 認められなかった場合は設定項目を外し、WorkManager のみで公開する
+  - WorkManager は15分間隔（最短）の保険として常に動かす。端末再起動後も自動で再開する
+  - 端末再起動後・アプリ更新後は BOOT_COMPLETED / MY_PACKAGE_REPLACED で常駐サービスを再開する
 
 ---
 
