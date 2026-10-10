@@ -1,7 +1,8 @@
 # Charge Trail: Battery Graph
+
 An Android app that records your battery level over time and shows it as a graph.
 
-バッテリー残量の推移をグラフで記録する Android アプリです。
+バッテリー残量の推移をグラフで記録する Android アプリです。英語/日本語対応
 
 - Battery history graph (6h / 24h / 7d / 30d), with charging periods highlighted
 - Drain rate and estimated time left
@@ -9,6 +10,7 @@ An Android app that records your battery level over time and shows it as a graph
 - Japanese and English
 
 ### Build
+
 ```
 ./gradlew assembleDebug
 ```
@@ -20,12 +22,14 @@ Release builds read the signing key from environment variables: `KEYSTORE_PATH` 
 ```
 
 ### Tests
+
 ```
 ./gradlew testDebugUnitTest
 ./gradlew connectedDebugAndroidTest
 ```
 
 ### Documents
+
 - Requirements: [docs/requirements.md](docs/requirements.md)
 - Architecture: [docs/architecture.md](docs/architecture.md)
 - ER diagram: [docs/er.puml](docs/er.puml)
