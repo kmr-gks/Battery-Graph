@@ -3,6 +3,7 @@ package com.gukos.battery_graph.ui.screen
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import android.text.format.DateUtils
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -194,6 +195,14 @@ private fun StatusCard(status: BatterySnapshot?, records: List<BatteryRecord>) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                records.lastOrNull()?.let { last ->
+                    // 記録が止まっていることに気づけるよう、最後に記録した時刻を出す
+                    Text(
+                        text = stringResource(R.string.status_last_record, formatRecordTime(last.timestamp)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 if (!isCharging) {
                     Text(
                         text = estimate?.let {
@@ -210,6 +219,15 @@ private fun StatusCard(status: BatterySnapshot?, records: List<BatteryRecord>) {
             }
         }
     }
+}
+
+/** 今日なら時刻だけ、それ以外は日付と時刻（12/24時間表示などは端末の設定に従う） */
+@Composable
+private fun formatRecordTime(millis: Long): String {
+    val context = LocalContext.current
+    var flags = DateUtils.FORMAT_SHOW_TIME
+    if (!DateUtils.isToday(millis)) flags = flags or DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_NUMERIC_DATE
+    return DateUtils.formatDateTime(context, millis, flags)
 }
 
 @Composable

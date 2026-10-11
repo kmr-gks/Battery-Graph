@@ -43,10 +43,26 @@ class BatteryMonitorService : Service() {
     private var receiver: BatteryReceiver? = null
     private var lastNotified: Pair<Int, Boolean>? = null
 
+    // Android 14 以降はユーザーが常駐通知をスワイプで消せる。消されたら記録は続け、通知は出し直さない
+    private var notificationDismissed = false
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val app = application as BatteryGraphApplication
+        when (intent?.action) {
+            // 通知の「停止」ボタン：設定を OFF にして止める（画面のスイッチも OFF になる）
+            ACTION_STOP -> {
+                app.monitorSettings.setHighPrecisionEnabled(false)
+                ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+                stopSelf()
+                return START_NOT_STICKY
+            }
+            ACTION_NOTIFICATION_DISMISSED -> {
+                notificationDismissed = true
+                return START_STICKY
+            }
+        }
         if (!app.monitorSettings.highPrecisionEnabled.value) {
             stopSelf()
             return START_NOT_STICKY
@@ -58,6 +74,8 @@ class BatteryMonitorService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        // アプリを開いて再起動されたときは通知を出し直したので、以降も更新する
+        notificationDismissed = false
 
         if (receiver == null) {
             val newReceiver = BatteryReceiver(::onBatteryChanged)
@@ -84,8 +102,8 @@ class BatteryMonitorService : Service() {
         val repository = (application as BatteryGraphApplication).repository
         scope.launch { repository.recordIfChanged(snapshot) }
 
-        // 電圧・温度だけの変化では通知を更新しない
-        if (lastNotified != snapshot.level to snapshot.isCharging) {
+        // 電圧・温度だけの変化や、通知が消された後は通知を更新しない
+        if (!notificationDismissed && lastNotified != snapshot.level to snapshot.isCharging) {
             getSystemService(NotificationManager::class.java)
                 .notify(NOTIFICATION_ID, buildNotification(snapshot))
         }
@@ -133,6 +151,8 @@ class BatteryMonitorService : Service() {
             .setContentTitle(title)
             .setContentText(getString(R.string.monitor_notification_text))
             .setContentIntent(openApp)
+            .addAction(0, getString(R.string.monitor_action_stop), serviceIntent(ACTION_STOP))
+            .setDeleteIntent(serviceIntent(ACTION_NOTIFICATION_DISMISSED))
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
@@ -140,6 +160,13 @@ class BatteryMonitorService : Service() {
             .setCategory(NotificationCompat.CATEGORY_STATUS)
             .build()
     }
+
+    private fun serviceIntent(action: String): PendingIntent = PendingIntent.getService(
+        this,
+        action.hashCode(),
+        Intent(this, BatteryMonitorService::class.java).setAction(action),
+        PendingIntent.FLAG_IMMUTABLE
+    )
 
     private fun createChannel() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -158,6 +185,9 @@ class BatteryMonitorService : Service() {
         private const val TAG = "BatteryMonitorService"
         private const val CHANNEL_ID = "battery_monitor"
         private const val NOTIFICATION_ID = 1
+        private const val ACTION_STOP = "com.gukos.battery_graph.action.STOP_MONITOR"
+        private const val ACTION_NOTIFICATION_DISMISSED =
+            "com.gukos.battery_graph.action.MONITOR_NOTIFICATION_DISMISSED"
 
         /** 設定が ON のときだけ起動する。フォアグラウンドか起動完了時など、起動が許可される場面で呼ぶ */
         fun startIfEnabled(context: Context) {
