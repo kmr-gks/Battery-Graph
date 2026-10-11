@@ -34,7 +34,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +46,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gukos.battery_graph.R
 import com.gukos.battery_graph.data.entity.BatteryRecord
 import com.gukos.battery_graph.domain.DischargeEstimate
@@ -61,9 +61,11 @@ import com.gukos.battery_graph.util.ChargeStatus
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BatteryScreen(viewModel: BatteryViewModel) {
-    val records by viewModel.records.collectAsState()
-    val period by viewModel.period.collectAsState()
-    val currentStatus by viewModel.currentStatus.collectAsState()
+    // 画面が見えていない間は収集を止める。records は WhileSubscribed なので DB の監視も止まり、
+    // 画面に戻ったときに表示期間の起点が計算し直される
+    val records by viewModel.records.collectAsStateWithLifecycle()
+    val period by viewModel.period.collectAsStateWithLifecycle()
+    val currentStatus by viewModel.currentStatus.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -273,7 +275,7 @@ private fun PeriodSelector(selected: GraphPeriod, onSelect: (GraphPeriod) -> Uni
 @Composable
 private fun HighPrecisionSwitch(viewModel: BatteryViewModel) {
     val context = LocalContext.current
-    val enabled by viewModel.highPrecisionEnabled.collectAsState()
+    val enabled by viewModel.highPrecisionEnabled.collectAsStateWithLifecycle()
 
     // 許可の前に出した通知は表示されないため、許可ダイアログの結果が出てからサービスを起動する。
     // 通知が許可されなくても記録は動く（通知が表示されないだけ）
