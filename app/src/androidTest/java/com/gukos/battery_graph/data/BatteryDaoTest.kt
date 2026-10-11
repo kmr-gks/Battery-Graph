@@ -62,13 +62,22 @@ class BatteryDaoTest {
     }
 
     @Test
-    fun getLatest_returnsNewestRecord() = runTest {
-        dao.insert(BatteryRecord(timestamp = 2_000, level = 70, isCharging = true))
+    fun getLatest_returnsLastInsertedRecord() = runTest {
         dao.insert(BatteryRecord(timestamp = 1_000, level = 80, isCharging = false))
+        dao.insert(BatteryRecord(timestamp = 2_000, level = 70, isCharging = true))
 
         val latest = dao.getLatest()!!
         assertEquals(70, latest.level)
         assertEquals(true, latest.isCharging)
+    }
+
+    @Test
+    fun getLatest_ignoresFutureTimestampAfterClockRewind() = runTest {
+        // 端末の時刻が未来にずれていた間の記録の後、時刻が戻ってから記録した
+        dao.insert(BatteryRecord(timestamp = 9_000_000, level = 50))
+        dao.insert(BatteryRecord(timestamp = 1_000, level = 80))
+
+        assertEquals(80, dao.getLatest()!!.level)
     }
 
     @Test

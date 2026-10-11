@@ -24,7 +24,11 @@ interface BatteryDao {
     )
     fun getSince(from: Long): Flow<List<BatteryRecord>>
 
-    @Query("SELECT * FROM battery_records ORDER BY timestamp DESC LIMIT 1")
+    /**
+     * 最後に追加した記録。時刻順ではなく追加順で選ぶ。端末の時刻が戻ると、未来の時刻の記録が
+     * いつまでも「最新」とみなされ、重複を防ぐ比較が効かなくなるため
+     */
+    @Query("SELECT * FROM battery_records ORDER BY id DESC LIMIT 1")
     suspend fun getLatest(): BatteryRecord?
 
     @Query("DELETE FROM battery_records WHERE timestamp < :timestamp")

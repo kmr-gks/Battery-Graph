@@ -30,7 +30,7 @@ class FakeBatteryDao : BatteryDao {
         }
 
     override suspend fun getLatest(): BatteryRecord? {
-        val latest = records.value.maxByOrNull { it.timestamp }
+        val latest = records.value.maxByOrNull { it.id }
         if (yieldInGetLatest) yield()
         return latest
     }

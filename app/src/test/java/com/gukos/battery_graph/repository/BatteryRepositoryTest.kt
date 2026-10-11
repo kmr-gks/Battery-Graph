@@ -110,6 +110,19 @@ class BatteryRepositoryTest {
     }
 
     @Test
+    fun recordIfChanged_comparesWithLastInsertedAfterClockRewind() = runTest {
+        // 端末の時刻が未来にずれていた間の記録が残っている
+        dao.insert(BatteryRecord(timestamp = START_TIME + TimeUnit.DAYS.toMillis(30), level = 50))
+
+        repository.recordIfChanged(snapshot(level = 80))
+        currentTime += MINUTE
+        // 時刻が戻った後も、最後に保存した 80% と比べて重複を防ぐ
+        repository.recordIfChanged(snapshot(level = 80))
+
+        assertEquals(listOf(50, 80), dao.all.map { it.level })
+    }
+
+    @Test
     fun recordIfChanged_concurrentCallsSaveOnlyOnce() = runTest {
         // 常駐サービスと画面の Receiver が同じ変化をほぼ同時に受け取る場合
         dao.yieldInGetLatest = true
