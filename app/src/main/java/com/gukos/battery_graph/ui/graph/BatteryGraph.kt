@@ -1,5 +1,7 @@
 package com.gukos.battery_graph.ui.graph
 
+import android.content.Context
+import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -26,6 +28,7 @@ import com.gukos.battery_graph.ui.theme.chargingColor
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToLong
 
@@ -105,7 +108,7 @@ fun BatteryGraph(
                 // setAvoidFirstLastClipping は最初のラベルを常に右へずらし、目盛り線と時刻がずれるため使わない
                 extraRightOffset = 16f
 
-                val formatter = TimeAxisFormatter()
+                val formatter = TimeAxisFormatter().apply { updateFormats(context) }
                 xAxis.apply {
                     position = XAxis.XAxisPosition.BOTTOM
                     setDrawGridLines(true)
@@ -133,6 +136,7 @@ fun BatteryGraph(
 
             val formatter = chart.xAxis.valueFormatter as TimeAxisFormatter
             formatter.baseTime = baseTime
+            formatter.updateFormats(chart.context)
 
             val entries = points.map {
                 Entry(formatter.toX(it.timestamp), it.level.toFloat())
@@ -171,7 +175,10 @@ fun BatteryGraph(
     )
 }
 
-/** X軸の値（baseTime からの経過分）と時刻の変換、およびラベルの書式 */
+/**
+ * X軸の値（baseTime からの経過分）と時刻の変換、およびラベルの書式。
+ * 日付と時刻の書式は端末の言語と12/24時間表示の設定に合わせる
+ */
 private class TimeAxisFormatter : ValueFormatter() {
 
     var baseTime: Long = 0L
@@ -179,8 +186,24 @@ private class TimeAxisFormatter : ValueFormatter() {
     // 現在の目盛りの間隔。1日以上なら日付だけを表示する
     var stepMinutes: Long = 60L
 
-    private val dayFormat = SimpleDateFormat("M/d", Locale.getDefault())
-    private val timeFormat = SimpleDateFormat("H:mm", Locale.getDefault())
+    private var locale: Locale? = null
+    private var is24Hour = true
+    private lateinit var dayFormat: SimpleDateFormat
+    private lateinit var timeFormat: SimpleDateFormat
+
+    /** 言語や12/24時間表示の設定が変わっていれば書式を作り直す */
+    fun updateFormats(context: Context) {
+        val newLocale = Locale.getDefault()
+        val new24Hour = DateFormat.is24HourFormat(context)
+        if (newLocale == locale && new24Hour == is24Hour) return
+        locale = newLocale
+        is24Hour = new24Hour
+        dayFormat = SimpleDateFormat(DateFormat.getBestDateTimePattern(newLocale, "Md"), newLocale)
+        timeFormat = SimpleDateFormat(
+            DateFormat.getBestDateTimePattern(newLocale, if (new24Hour) "Hm" else "hm"),
+            newLocale
+        )
+    }
 
     fun toX(millis: Long): Float = (millis - baseTime).toFloat() / MILLIS_PER_MINUTE
 
@@ -191,11 +214,10 @@ private class TimeAxisFormatter : ValueFormatter() {
         val calendar = Calendar.getInstance().apply { timeInMillis = millis }
         val isMidnight = calendar.get(Calendar.HOUR_OF_DAY) == 0 && calendar.get(Calendar.MINUTE) == 0
         // 0:00 の目盛りは日付にして、どの日かが分かるようにする
-        return if (stepMinutes >= TimeUnit.DAYS.toMinutes(1) || isMidnight) {
-            dayFormat.format(millis)
-        } else {
-            timeFormat.format(millis)
-        }
+        val format = if (stepMinutes >= TimeUnit.DAYS.toMinutes(1) || isMidnight) dayFormat else timeFormat
+        // 画面を開いたままタイムゾーンが変わっても、現在のタイムゾーンで表示する
+        format.timeZone = TimeZone.getDefault()
+        return format.format(millis)
     }
 }
 
@@ -227,27 +249,5 @@ private class TimeXAxisRenderer(
         mAxis.mCenteredEntries = mAxis.mEntries
         mAxis.mDecimals = 0
         computeSize()
-    }
-
-    /** start〜end の間で、その日の 0:00 から step 分ごとの時刻（step が日単位なら日ごと） */
-    private fun timeTicks(start: Long, end: Long, stepMinutes: Long): List<Long> {
-        val calendar = Calendar.getInstance().apply {
-            timeInMillis = start
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        val minutesPerDay = TimeUnit.DAYS.toMinutes(1)
-        val ticks = mutableListOf<Long>()
-        while (calendar.timeInMillis <= end) {
-            if (calendar.timeInMillis >= start) ticks += calendar.timeInMillis
-            if (stepMinutes >= minutesPerDay) {
-                calendar.add(Calendar.DAY_OF_YEAR, (stepMinutes / minutesPerDay).toInt())
-            } else {
-                calendar.add(Calendar.MINUTE, stepMinutes.toInt())
-            }
-        }
-        return ticks
     }
 }
