@@ -64,6 +64,36 @@ class DischargeEstimateTest {
     }
 
     @Test
+    fun estimate_interpolatesLevelAtLookbackStart() {
+        // 3時間前より前の記録（600分前）と3時間以内の記録（170分前）の間で、180分前の残量を補間する
+        val records = listOf(record(600, 100), record(170, 80), record(0, 71))
+
+        val estimate = DischargeEstimate.estimate(records, now)!!
+
+        // 180分前の残量 = 100 - 20 × (420 / 430) ≈ 80.47%、3時間で約9.47%減少
+        assertEquals(3.16, estimate.percentPerHour, 0.01)
+    }
+
+    @Test
+    fun estimate_interpolatesWhenNoRecordWithinLookback() {
+        // 記録の間隔が長く、3時間以内には最新の記録しかない
+        val records = listOf(record(600, 100), record(60, 70))
+
+        val estimate = DischargeEstimate.estimate(records, now)!!
+
+        // 3時間前の残量 = 100 - 30 × (420 / 540) ≈ 76.67%、3時間で約6.67%減少
+        assertEquals(2.22, estimate.percentPerHour, 0.01)
+    }
+
+    @Test
+    fun estimate_nullWhenDropTooSmall() {
+        // 充電を外した直後などで 1% しか減っていない
+        val records = listOf(record(60, 100), record(0, 99))
+
+        assertNull(DischargeEstimate.estimate(records, now))
+    }
+
+    @Test
     fun estimate_nullWhenCharging() {
         val records = listOf(record(120, 60), record(0, 50, isCharging = true))
 
