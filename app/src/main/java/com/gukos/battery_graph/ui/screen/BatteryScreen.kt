@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,6 +32,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -88,7 +93,10 @@ private fun StatusCard(status: BatterySnapshot?, records: List<BatteryRecord>) {
     val estimate = DischargeEstimate.estimate(records, System.currentTimeMillis())
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        // 残量・状態・温度などを1つのまとまりとして読み上げる
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics(mergeDescendants = true) {},
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         )
@@ -156,11 +164,18 @@ private fun PeriodSelector(selected: GraphPeriod, onSelect: (GraphPeriod) -> Uni
     val periods = GraphPeriod.entries
     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
         periods.forEachIndexed { index, period ->
+            val description = stringResource(period.descriptionRes)
             SegmentedButton(
                 selected = period == selected,
                 onClick = { onSelect(period) },
                 shape = SegmentedButtonDefaults.itemShape(index, periods.size),
-                label = { Text(stringResource(period.labelRes)) }
+                label = {
+                    // 「6h」ではなく「6 hours」と読み上げる
+                    Text(
+                        stringResource(period.labelRes),
+                        modifier = Modifier.clearAndSetSemantics { contentDescription = description }
+                    )
+                }
             )
         }
     }
@@ -193,10 +208,13 @@ private fun HighPrecisionSwitch(viewModel: BatteryViewModel) {
         }
     }
 
+    // 行全体をスイッチとして扱い、文字の部分を押しても切り替わるようにする。
+    // TalkBack ではラベルと状態がまとめて読み上げられる
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 8.dp),
+            .toggleable(value = enabled, role = Role.Switch, onValueChange = ::setEnabled)
+            .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -207,6 +225,6 @@ private fun HighPrecisionSwitch(viewModel: BatteryViewModel) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Switch(checked = enabled, onCheckedChange = ::setEnabled)
+        Switch(checked = enabled, onCheckedChange = null)
     }
 }

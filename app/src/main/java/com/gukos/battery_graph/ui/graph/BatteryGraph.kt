@@ -66,6 +66,14 @@ fun BatteryGraph(
     val chargeColor = chargingColor().toArgb()
     val textColor = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
     val gridColor = MaterialTheme.colorScheme.outlineVariant.toArgb()
+    // グラフは画像として扱われ読み上げられないため、要約を TalkBack 用の説明にする
+    val summary = stringResource(
+        R.string.graph_description,
+        stringResource(period.descriptionRes),
+        records.last().level,
+        records.maxOf { it.level },
+        records.minOf { it.level }
+    )
 
     AndroidView(
         modifier = modifier,
@@ -142,6 +150,7 @@ fun BatteryGraph(
             chart.axisLeft.gridColor = gridColor
 
             chart.data = LineData(dataSet)
+            chart.contentDescription = summary
             // 期間を切り替えたらズームを解除する
             if (chart.tag != period) {
                 chart.fitScreen()

@@ -20,6 +20,11 @@
 	<string name="period_24h">24時間</string>
 	<string name="period_7d">7日</string>
 	<string name="period_30d">30日</string>
+	<string name="period_6h_description">6時間</string>
+	<string name="period_24h_description">24時間</string>
+	<string name="period_7d_description">7日間</string>
+	<string name="period_30d_description">30日間</string>
 
 	<string name="graph_empty">記録が2件以上たまるとグラフを表示します</string>
+	<string name="graph_description">過去%1$sの電池残量グラフ。現在%2$d%%、最高%3$d%%、最低%4$d%%。</string>
 </resources>
