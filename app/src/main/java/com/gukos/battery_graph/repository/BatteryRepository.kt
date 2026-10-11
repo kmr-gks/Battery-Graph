@@ -4,7 +4,9 @@ import com.gukos.battery_graph.data.dao.BatteryDao
 import com.gukos.battery_graph.data.entity.BatteryRecord
 import com.gukos.battery_graph.util.BatteryStatusSource
 import com.gukos.battery_graph.util.BatterySnapshot
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.TimeUnit
@@ -18,8 +20,13 @@ class BatteryRepository(
     // 常駐サービス・画面・Worker から同時に呼ばれても「最新と比較して保存」が割り込まれないようにする
     private val writeMutex = Mutex()
 
-    /** from 以降の記録（古い順）。直前の1件も含む */
-    fun getRecordsSince(from: Long): Flow<List<BatteryRecord>> = dao.getSince(from)
+    /**
+     * from 以降の記録（古い順）。直前の1件も含む。
+     * DB を開けない異常時に、Room が収集側（メインスレッド）で開き直そうとして画面が固まるのを防ぐため、
+     * IO スレッドで動かす
+     */
+    fun getRecordsSince(from: Long): Flow<List<BatteryRecord>> =
+        dao.getSince(from).flowOn(Dispatchers.IO)
 
     /** 現在の状態を無条件に記録する（定期記録・手動記録用） */
     suspend fun recordBatteryLevel() {

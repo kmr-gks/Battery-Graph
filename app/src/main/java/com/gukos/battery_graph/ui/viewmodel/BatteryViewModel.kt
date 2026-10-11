@@ -1,5 +1,7 @@
 package com.gukos.battery_graph.ui.viewmodel
 
+import android.database.sqlite.SQLiteException
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gukos.battery_graph.data.entity.BatteryRecord
@@ -33,7 +35,15 @@ class BatteryViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     val records: StateFlow<List<BatteryRecord>> =
         _period
-            .flatMapLatest { repository.getRecordsSince(System.currentTimeMillis() - it.durationMillis) }
+            .flatMapLatest { period ->
+                repository.getRecordsSince(System.currentTimeMillis() - period.durationMillis)
+                    // DB が壊れているなどで開けなくても、クラッシュせず空のグラフにする
+                    .catch { e ->
+                        if (e !is SQLiteException) throw e
+                        Log.w(TAG, "load failed", e)
+                        emit(emptyList())
+                    }
+            }
             .stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(5_000),
@@ -47,7 +57,16 @@ class BatteryViewModel(
     fun onBatteryChanged(snapshot: BatterySnapshot) {
         _currentStatus.value = snapshot
         viewModelScope.launch {
-            repository.recordIfChanged(snapshot)
+            // ストレージが満杯などで書き込めなくても、画面の表示は続ける
+            try {
+                repository.recordIfChanged(snapshot)
+            } catch (e: SQLiteException) {
+                Log.w(TAG, "record failed", e)
+            }
         }
+    }
+
+    private companion object {
+        const val TAG = "BatteryViewModel"
     }
 }

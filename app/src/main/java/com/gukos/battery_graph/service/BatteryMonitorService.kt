@@ -20,6 +20,7 @@ import com.gukos.battery_graph.MainActivity
 import com.gukos.battery_graph.R
 import com.gukos.battery_graph.util.BatteryReceiver
 import com.gukos.battery_graph.util.BatterySnapshot
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,7 +34,12 @@ import kotlinx.coroutines.launch
  */
 class BatteryMonitorService : Service() {
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    // ストレージが満杯などで DB への書き込みが失敗しても、サービス（プロセス）を落とさない。
+    // 落ちると START_STICKY で再起動し、また失敗するのを繰り返してしまう
+    private val scope = CoroutineScope(
+        SupervisorJob() + Dispatchers.IO +
+            CoroutineExceptionHandler { _, e -> Log.w(TAG, "record failed", e) }
+    )
     private var receiver: BatteryReceiver? = null
     private var lastNotified: Pair<Int, Boolean>? = null
 
