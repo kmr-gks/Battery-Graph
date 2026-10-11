@@ -5,38 +5,84 @@ package data {
     id: Int
     timestamp: Long
     level: Int
+    isCharging: Boolean?
+    temperature: Int?
+    voltage: Int?
   }
 
   interface BatteryDao {
     + insert(record: BatteryRecord)
-    + getAll(): Flow<List<BatteryRecord>>
+    + getSince(from: Long): Flow<List<BatteryRecord>>
+    + getLatest(): BatteryRecord?
+    + deleteOlderThan(timestamp: Long): Int
   }
 
   class AppDatabase {
     + batteryDao(): BatteryDao
+    + MIGRATION_1_2
   }
 }
 
 package util {
-  class BatteryManagerWrapper {
-    + getBatteryLevel(): Int
+  interface BatteryStatusSource {
+    + getSnapshot(): BatterySnapshot?
+  }
+  class BatteryManagerWrapper
+  class BatterySnapshot {
+    level: Int
+    isCharging: Boolean
+    temperature: Int?
+    voltage: Int?
+    chargeStatus: ChargeStatus
+    + {static} fromIntent(intent): BatterySnapshot?
+  }
+  enum ChargeStatus {
+    DISCHARGING
+    CHARGING
+    PLUGGED_NOT_CHARGING
+    FULL
+  }
+  class BatteryReceiver
+  class MonitorSettings {
+    + highPrecisionEnabled: StateFlow<Boolean>
+    + setHighPrecisionEnabled(enabled)
   }
 }
 
 package repository {
   class BatteryRepository {
-    - dao: BatteryDao
-    - batteryManager: BatteryManagerWrapper
-    + getRecords(): Flow<List<BatteryRecord>>
+    + getRecordsSince(from): Flow<List<BatteryRecord>>
     + recordBatteryLevel()
+    + recordIfChanged(snapshot)
+    + deleteExpiredRecords(): Int
+  }
+}
+
+package domain {
+  class DischargeEstimate {
+    percentPerHour: Double
+    remainingMinutes: Long
+    + {static} estimate(records, now): DischargeEstimate?
+  }
+  class Downsample <<function>> {
+    + downsample(records, buckets): List<BatteryRecord>
   }
 }
 
 package ui {
   class BatteryViewModel {
-    - repository: BatteryRepository
-    + batteryRecords: StateFlow<List<BatteryRecord>>
+    + records: StateFlow<List<BatteryRecord>>
+    + period: StateFlow<GraphPeriod>
+    + currentStatus: StateFlow<BatterySnapshot?>
+    + highPrecisionEnabled: StateFlow<Boolean>
   }
+  class BatteryScreen <<Composable>>
+  class BatteryGraph <<Composable>>
+}
+
+package service {
+  class BatteryMonitorService <<ForegroundService>>
+  class BootReceiver
 }
 
 package worker {
@@ -45,11 +91,30 @@ package worker {
   }
 }
 
+class BatteryGraphApplication {
+  + repository: BatteryRepository
+  + monitorSettings: MonitorSettings
+  + batteryStatus: BatteryStatusSource
+}
+
 BatteryDao --> BatteryRecord
 AppDatabase --> BatteryDao
+BatteryManagerWrapper ..|> BatteryStatusSource
 BatteryRepository --> BatteryDao
-BatteryRepository --> BatteryManagerWrapper
+BatteryRepository --> BatteryStatusSource
+BatteryReceiver --> BatterySnapshot
 BatteryViewModel --> BatteryRepository
+BatteryViewModel --> MonitorSettings
+BatteryScreen --> BatteryViewModel
+BatteryScreen --> BatteryGraph
+BatteryScreen --> DischargeEstimate
+BatteryGraph --> Downsample
+BatteryMonitorService --> BatteryRepository
+BatteryMonitorService --> BatteryReceiver
+BatteryMonitorService --> MonitorSettings
+BootReceiver --> BatteryMonitorService
 BatteryWorker --> BatteryRepository
+BatteryGraphApplication --> BatteryRepository
+BatteryGraphApplication --> MonitorSettings
 
 @enduml

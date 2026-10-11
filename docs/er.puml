@@ -1,10 +1,14 @@
 @startuml
 
+' DB version 2（app/schemas/ のスキーマ JSON と対応）
 entity "battery_records" as battery_records {
-  + id : Int <<PK>>
+  + id : Int <<PK, AUTOINCREMENT>>
   --
-  timestamp : Long
-  level : Int
+  timestamp : Long <<INDEX>>  ' epoch ミリ秒
+  level : Int                 ' 残量（%）
+  isCharging : Boolean?       ' 電源接続中か（v1 の記録は null）
+  temperature : Int?          ' 0.1℃単位
+  voltage : Int?              ' mV
 }
 
 @enduml
