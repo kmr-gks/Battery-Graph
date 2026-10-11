@@ -15,11 +15,20 @@ An Android app that records your battery level over time and shows it as a graph
 ./gradlew assembleDebug
 ```
 
-Release builds read the signing key from environment variables: `KEYSTORE_PATH` (default `app/release.keystore`), `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`. `VERSION_CODE` / `VERSION_NAME` set the version (CI uses the run number).
+Release builds read the signing key from environment variables: `KEYSTORE_PATH` (default `app/release.keystore`), `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`. The version is set by `appVersionCode` / `appVersionName` in `gradle.properties`.
 
 ```
 ./gradlew bundleRelease
 ```
+
+### Release
+1. Raise `appVersionCode` and `appVersionName` in `gradle.properties` and commit to `main`
+2. Push a tag named `v` + `appVersionName`:
+   ```
+   git tag v1.1.0
+   git push origin v1.1.0
+   ```
+3. The Release workflow builds a signed APK and AAB and attaches them to a GitHub Release. Upload the AAB to Google Play.
 
 ### Tests
 

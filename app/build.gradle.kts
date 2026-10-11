@@ -13,9 +13,9 @@ android {
 		applicationId = "com.gukos.battery_graph"
 		minSdk = 24
 		targetSdk = 36
-		// CI では実行番号を渡して、アップロードごとに versionCode を増やす（Play は同じ値を受け付けない）
-		versionCode = System.getenv("VERSION_CODE")?.toInt() ?: 1
-		versionName = System.getenv("VERSION_NAME") ?: "1.0"
+		// バージョンは gradle.properties で管理する（手元のビルドと CI で同じ値になる）
+		versionCode = providers.gradleProperty("appVersionCode").get().toInt()
+		versionName = providers.gradleProperty("appVersionName").get()
 
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 		vectorDrawables {

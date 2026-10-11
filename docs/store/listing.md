@@ -155,7 +155,7 @@ First release: battery history graph, highlighted charging periods, drain rate a
 
 1. **アプリの作成**：Play Console で上記の名前・言語・無料アプリとして作成する
 2. **Play アプリ署名**：初回アップロード時に有効にする。手元の `release.keystore` は「アップロード鍵」になり、配信用の鍵は Google が管理する。アップロード鍵をなくすと更新できなくなる（再発行の手続きは可能）ので、安全な場所に保管する
-3. **AAB のアップロード**：`main` に push すると、CI が署名済みの AAB を作り、GitHub Release と Actions の成果物に置く。これを Play Console にアップロードする
+3. **AAB のアップロード**：`gradle.properties` の `appVersionCode` と `appVersionName` を上げて `main` にコミットし、`v` + `appVersionName` のタグ（例：`v1.1.0`）を push する。Release ワークフローが署名済みの AAB を作って GitHub Release に置くので、それを Play Console にアップロードする
 4. **テスト**：まず「内部テスト」で配信し、実機で動作を確認する
 5. **クローズドテスト**：個人の開発者アカウントは、本番公開の前にクローズドテストが必要な場合がある（12人以上のテスターが14日間参加、など）。条件はアカウントの種類と作成時期で変わるため、Play Console の表示を確認する
 6. **本番公開の申請**：上記の掲載情報と申告をすべて入力し、審査に提出する
