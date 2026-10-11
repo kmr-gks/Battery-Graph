@@ -1,6 +1,6 @@
 # Charge Trail: Battery Graph プライバシーポリシー / Privacy Policy
 
-最終更新日 / Last updated: 2026-10-10
+最終更新日 / Last updated: 2026-10-11
 
 [日本語](#日本語) | [English](#english)
 
@@ -36,6 +36,7 @@
 | 通知 | 「高精度記録」を有効にしたとき、現在の残量を通知に表示するため |
 | フォアグラウンドサービス | 「高精度記録」を有効にしたとき、残量が変わるたびに記録するため |
 | 起動時の実行 | 端末の再起動後に「高精度記録」を再開するため |
+| スリープの防止 | 15分ごとの記録の処理中に、端末がスリープして処理が中断されないようにするため |
 
 ### 5. お子様のプライバシー
 本アプリは、お子様を含むどの利用者からも個人情報を収集しません。
@@ -79,6 +80,7 @@ The App does not collect personally identifiable information such as your name, 
 | Notifications | To show the current battery level in a notification when "High-precision recording" is on |
 | Foreground service | To record every change in battery level when "High-precision recording" is on |
 | Run at startup | To resume "High-precision recording" after the device restarts |
+| Prevent device from sleeping | To keep the device awake while the 15-minute recording task runs |
 
 ### 5. Children's privacy
 The App does not collect personal information from anyone, including children.
