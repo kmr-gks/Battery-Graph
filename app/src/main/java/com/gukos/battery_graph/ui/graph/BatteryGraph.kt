@@ -85,13 +85,15 @@ fun BatteryGraph(
                 setDragDecelerationFrictionCoef(0.9f)
                 setClipValuesToContent(true)
                 setNoDataText("")
+                // 右端の目盛りのラベルが切れないよう余白を取る。
+                // setAvoidFirstLastClipping は最初のラベルを常に右へずらし、目盛り線と時刻がずれるため使わない
+                extraRightOffset = 16f
 
                 val formatter = TimeAxisFormatter()
                 xAxis.apply {
                     position = XAxis.XAxisPosition.BOTTOM
                     setDrawGridLines(true)
                     setDrawAxisLine(false)
-                    setAvoidFirstLastClipping(true)
                     valueFormatter = formatter
                 }
                 setXAxisRenderer(
