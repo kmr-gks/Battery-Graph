@@ -56,6 +56,7 @@ import com.gukos.battery_graph.ui.graph.GraphPeriod
 import com.gukos.battery_graph.ui.theme.chargingColor
 import com.gukos.battery_graph.ui.viewmodel.BatteryViewModel
 import com.gukos.battery_graph.util.BatterySnapshot
+import com.gukos.battery_graph.util.ChargeStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -154,6 +155,8 @@ private fun StatusCard(status: BatterySnapshot?, records: List<BatteryRecord>) {
     // 画面を開いた直後で最新状態が届いていなければ、最後の記録を表示する
     val level = status?.level ?: records.lastOrNull()?.level
     val isCharging = status?.isCharging ?: (records.lastOrNull()?.isCharging == true)
+    val chargeStatus = status?.chargeStatus
+        ?: if (isCharging) ChargeStatus.CHARGING else ChargeStatus.DISCHARGING
     val estimate = DischargeEstimate.estimate(records, System.currentTimeMillis())
 
     Card(
@@ -179,7 +182,12 @@ private fun StatusCard(status: BatterySnapshot?, records: List<BatteryRecord>) {
             Column {
                 Text(
                     text = stringResource(
-                        if (isCharging) R.string.status_charging else R.string.status_discharging
+                        when (chargeStatus) {
+                            ChargeStatus.CHARGING -> R.string.status_charging
+                            ChargeStatus.PLUGGED_NOT_CHARGING -> R.string.status_plugged_not_charging
+                            ChargeStatus.FULL -> R.string.status_full
+                            ChargeStatus.DISCHARGING -> R.string.status_discharging
+                        }
                     ),
                     style = MaterialTheme.typography.titleMedium,
                     color = if (isCharging) chargingColor() else MaterialTheme.colorScheme.onSurface

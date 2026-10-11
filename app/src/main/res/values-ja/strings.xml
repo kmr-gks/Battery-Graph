@@ -3,6 +3,8 @@
 	<string name="monitor_channel_description">バッテリー残量の変化を記録している間、残量を表示します</string>
 	<string name="monitor_notification_title">残量 %1$d%%</string>
 	<string name="monitor_notification_title_charging">残量 %1$d%%（充電中）</string>
+	<string name="monitor_notification_title_not_charging">残量 %1$d%%（接続中・充電停止）</string>
+	<string name="monitor_notification_title_full">残量 %1$d%%（満充電）</string>
 	<string name="monitor_notification_title_unknown">バッテリー残量を記録中</string>
 	<string name="monitor_notification_text">残量が変わるたびに記録しています</string>
 	<string name="monitor_action_stop">停止</string>
@@ -12,6 +14,8 @@
 
 	<string name="status_charging">充電中</string>
 	<string name="status_discharging">放電中</string>
+	<string name="status_plugged_not_charging">接続中（充電停止）</string>
+	<string name="status_full">満充電</string>
 	<string name="status_pace">減少ペース 約%1$.1f%%/時 ・ 残り約%2$s</string>
 	<string name="status_pace_unknown">減少ペースを計算中</string>
 	<string name="status_last_record">最終記録 %1$s</string>

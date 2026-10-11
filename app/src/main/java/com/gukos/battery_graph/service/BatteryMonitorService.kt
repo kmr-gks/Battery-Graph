@@ -20,6 +20,7 @@ import com.gukos.battery_graph.MainActivity
 import com.gukos.battery_graph.R
 import com.gukos.battery_graph.util.BatteryReceiver
 import com.gukos.battery_graph.util.BatterySnapshot
+import com.gukos.battery_graph.util.ChargeStatus
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +42,7 @@ class BatteryMonitorService : Service() {
             CoroutineExceptionHandler { _, e -> Log.w(TAG, "record failed", e) }
     )
     private var receiver: BatteryReceiver? = null
-    private var lastNotified: Pair<Int, Boolean>? = null
+    private var lastNotified: Pair<Int, ChargeStatus>? = null
 
     // Android 14 以降はユーザーが常駐通知をスワイプで消せる。消されたら記録は続け、通知は出し直さない
     private var notificationDismissed = false
@@ -103,7 +104,7 @@ class BatteryMonitorService : Service() {
         scope.launch { repository.recordIfChanged(snapshot) }
 
         // 電圧・温度だけの変化や、通知が消された後は通知を更新しない
-        if (!notificationDismissed && lastNotified != snapshot.level to snapshot.isCharging) {
+        if (!notificationDismissed && lastNotified != snapshot.level to snapshot.chargeStatus) {
             getSystemService(NotificationManager::class.java)
                 .notify(NOTIFICATION_ID, buildNotification(snapshot))
         }
@@ -133,12 +134,17 @@ class BatteryMonitorService : Service() {
     }
 
     private fun buildNotification(snapshot: BatterySnapshot?): android.app.Notification {
-        lastNotified = snapshot?.let { it.level to it.isCharging }
+        lastNotified = snapshot?.let { it.level to it.chargeStatus }
 
         val title = when {
             snapshot == null -> getString(R.string.monitor_notification_title_unknown)
-            snapshot.isCharging -> getString(R.string.monitor_notification_title_charging, snapshot.level)
-            else -> getString(R.string.monitor_notification_title, snapshot.level)
+            else -> when (snapshot.chargeStatus) {
+                ChargeStatus.CHARGING -> getString(R.string.monitor_notification_title_charging, snapshot.level)
+                ChargeStatus.PLUGGED_NOT_CHARGING ->
+                    getString(R.string.monitor_notification_title_not_charging, snapshot.level)
+                ChargeStatus.FULL -> getString(R.string.monitor_notification_title_full, snapshot.level)
+                ChargeStatus.DISCHARGING -> getString(R.string.monitor_notification_title, snapshot.level)
+            }
         }
         val openApp = PendingIntent.getActivity(
             this,
