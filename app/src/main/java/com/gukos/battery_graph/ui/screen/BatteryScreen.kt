@@ -6,13 +6,20 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -58,31 +65,87 @@ fun BatteryScreen(viewModel: BatteryViewModel) {
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) }
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) },
+        // 横画面でカメラの切り欠きに重ならないようにする
+        contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = 16.dp)
         ) {
-            StatusCard(currentStatus, records)
+            val controls = @Composable {
+                StatusCard(currentStatus, records)
+                PeriodSelector(period, viewModel::selectPeriod)
+            }
+            when {
+                // 横長: 左に操作、右にグラフを大きく表示する
+                maxWidth > maxHeight -> Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .weight(0.42f)
+                            .fillMaxHeight()
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        controls()
+                        HighPrecisionSwitch(viewModel)
+                    }
+                    BatteryGraph(
+                        records = records,
+                        period = period,
+                        modifier = Modifier
+                            .weight(0.58f)
+                            .fillMaxHeight()
+                            .padding(bottom = 8.dp)
+                    )
+                }
 
-            PeriodSelector(period, viewModel::selectPeriod)
+                // 縦長で十分な高さがある: グラフで残りの高さを埋める
+                maxHeight >= MIN_HEIGHT_FOR_FILL -> Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    controls()
+                    BatteryGraph(
+                        records = records,
+                        period = period,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                    )
+                    HighPrecisionSwitch(viewModel)
+                }
 
-            BatteryGraph(
-                records = records,
-                period = period,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-            )
-
-            HighPrecisionSwitch(viewModel)
+                // 高さが足りない（小さい画面・大きな文字）: 全体をスクロールし、グラフの高さを確保する
+                else -> Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    controls()
+                    BatteryGraph(
+                        records = records,
+                        period = period,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(SCROLLING_GRAPH_HEIGHT)
+                    )
+                    HighPrecisionSwitch(viewModel)
+                }
+            }
         }
     }
 }
+
+// 縦画面でグラフに残りの高さを割り当てる最低限の画面の高さ。これより低いとスクロールにする
+private val MIN_HEIGHT_FOR_FILL = 520.dp
+private val SCROLLING_GRAPH_HEIGHT = 280.dp
 
 /** 現在の残量・充電状態・温度・電圧と、減少ペースの目安 */
 @Composable
