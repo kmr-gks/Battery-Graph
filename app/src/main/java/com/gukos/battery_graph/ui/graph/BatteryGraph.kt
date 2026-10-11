@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
@@ -20,6 +21,7 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.renderer.XAxisRenderer
 import com.gukos.battery_graph.R
 import com.gukos.battery_graph.data.entity.BatteryRecord
+import com.gukos.battery_graph.domain.downsample
 import com.gukos.battery_graph.ui.theme.chargingColor
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -39,6 +41,9 @@ private val TICK_STEPS_MINUTES = listOf(
     24 * 60L, 2 * 24 * 60L, 7 * 24 * 60L, 14 * 24 * 60L
 )
 private const val MAX_TICKS = 5
+
+// 描く点を「区間ごとの最小・最大」に間引くときの区間の数（点は最大で約2倍）
+private const val DOWNSAMPLE_BUCKETS = 600
 
 /**
  * 残量の推移グラフ。充電中の区間は色を変えて描く。
@@ -74,6 +79,9 @@ fun BatteryGraph(
         records.maxOf { it.level },
         records.minOf { it.level }
     )
+
+    // 7日・30日表示では記録が数千件になるため、画面の幅に見合う数に間引く
+    val points = remember(records) { downsample(records, DOWNSAMPLE_BUCKETS) }
 
     AndroidView(
         modifier = modifier,
@@ -126,12 +134,12 @@ fun BatteryGraph(
             val formatter = chart.xAxis.valueFormatter as TimeAxisFormatter
             formatter.baseTime = baseTime
 
-            val entries = records.map {
+            val entries = points.map {
                 Entry(formatter.toX(it.timestamp), it.level.toFloat())
             }
             val dataSet = LineDataSet(entries, "Battery").apply {
                 // 各点の色はその点から次の点までの線の色になる
-                colors = records.map { if (it.isCharging == true) chargeColor else lineColor }
+                colors = points.map { if (it.isCharging == true) chargeColor else lineColor }
                 setDrawCircles(false)
                 setDrawValues(false)
                 lineWidth = 2f
