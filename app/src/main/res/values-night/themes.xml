@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<!-- ダークモードで起動時の画面（ウィンドウ背景・スプラッシュ）が白く光らないようにする -->
+	<style name="Theme.BatteryGraph" parent="android:Theme.Material.NoActionBar" />
+</resources>
