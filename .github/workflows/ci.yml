@@ -20,6 +20,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # バージョンをコミット数から求めるため、全履歴を取得する
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -46,6 +49,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # バージョンをコミット数から求めるため、全履歴を取得する
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4

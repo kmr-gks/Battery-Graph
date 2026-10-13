@@ -1,9 +1,9 @@
 name: Release
 
-# v + gradle.properties の appVersionName と同じ名前のタグ（例: v1.1.0）を push したときだけ動く
+# GitHub の Actions 画面の「Run workflow」ボタンで、main から実行する。
+# バージョンは git から自動で決まり、v + バージョン名のタグと Release を作る
 on:
-  push:
-    tags: [ "v*" ]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -14,18 +14,14 @@ concurrency:
 
 jobs:
   release:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Check that the tag matches appVersionName
-        run: |
-          VERSION_NAME=$(grep '^appVersionName=' gradle.properties | cut -d= -f2)
-          if [ "v${VERSION_NAME}" != "${GITHUB_REF_NAME}" ]; then
-            echo "::error::Tag ${GITHUB_REF_NAME} does not match appVersionName ${VERSION_NAME} in gradle.properties"
-            exit 1
-          fi
+        with:
+          # バージョンをコミット数から求めるため、全履歴を取得する
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -35,6 +31,20 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+
+      - name: Read version
+        id: version
+        run: |
+          ./gradlew -q :app:printVersion >> "$GITHUB_OUTPUT"
+          cat "$GITHUB_OUTPUT"
+
+      - name: Check that the version has not been released
+        run: |
+          TAG="v${{ steps.version.outputs.versionName }}"
+          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+            echo "::error::${TAG} is already released. Commit a change first."
+            exit 1
+          fi
 
       - name: Lint and unit tests
         run: ./gradlew lint testDebugUnitTest
@@ -52,17 +62,26 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
+      # 例: BatteryGraph-v1.1.3-code90.aab
+      - name: Rename outputs
+        id: files
+        run: |
+          BASE="BatteryGraph-v${{ steps.version.outputs.versionName }}-code${{ steps.version.outputs.versionCode }}"
+          mkdir -p dist
+          cp app/build/outputs/bundle/release/app-release.aab "dist/${BASE}.aab"
+          cp app/build/outputs/apk/release/app-release.apk "dist/${BASE}.apk"
+          ls -l dist
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
+          tag_name: v${{ steps.version.outputs.versionName }}
+          target_commitish: ${{ github.sha }}
+          name: v${{ steps.version.outputs.versionName }} (versionCode ${{ steps.version.outputs.versionCode }})
           body: |
             Google Play には AAB（.aab）をアップロードしてください。
             APK はアップロード鍵で署名されています。Google Play で配信される版とは署名が異なるため、互いに上書き更新できません。
 
             Upload the AAB (.aab) to Google Play.
             The APK is signed with the upload key, so it cannot update (or be updated by) the version installed from Google Play.
-          files: |
-            app/build/outputs/apk/release/*.apk
-            app/build/outputs/bundle/release/*.aab
+          files: dist/*

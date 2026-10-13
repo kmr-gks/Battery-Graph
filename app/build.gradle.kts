@@ -5,6 +5,34 @@ plugins {
 	id("androidx.room")
 }
 
+// git の出力を返す。git がない場合（ソースの zip から開いたなど）は null
+fun git(vararg args: String): String? = try {
+	providers.exec {
+		commandLine("git", *args)
+		isIgnoreExitValue = true
+	}.standardOutput.asText.get().trim().ifEmpty { null }
+} catch (e: Exception) {
+	null
+}
+
+// バージョン名は「gradle.properties の appVersion + 最後の数字」。
+// 最後の数字は appVersion の行を最後に変えたコミットからのコミット数（0 から数える）
+val appVersionBase: String = providers.gradleProperty("appVersion").get()
+val appVersionPatch: Int = git("log", "-n1", "--format=%H", "-G^appVersion=", "--", "gradle.properties")
+	?.let { git("rev-list", "--count", "$it..HEAD") }
+	?.toIntOrNull() ?: 0
+val appVersionName = "$appVersionBase.$appVersionPatch"
+
+// versionCode はコミット数の合計。コミットするたびに増えるので、いつ Play にアップロードしても前回より大きくなる
+val appVersionCode: Int = git("rev-list", "--count", "HEAD")?.toIntOrNull() ?: 1
+
+// リリースのワークフローがバージョンを読み取るためのタスク
+tasks.register("printVersion") {
+	val name = appVersionName
+	val code = appVersionCode
+	doLast { println("versionName=$name\nversionCode=$code") }
+}
+
 android {
 	namespace = "com.gukos.battery_graph"
 	compileSdk = 36
@@ -13,9 +41,8 @@ android {
 		applicationId = "com.gukos.battery_graph"
 		minSdk = 24
 		targetSdk = 36
-		// バージョンは gradle.properties で管理する（手元のビルドと CI で同じ値になる）
-		versionCode = providers.gradleProperty("appVersionCode").get().toInt()
-		versionName = providers.gradleProperty("appVersionName").get()
+		versionCode = appVersionCode
+		versionName = appVersionName
 
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 		vectorDrawables {

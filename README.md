@@ -15,20 +15,21 @@ An Android app that records your battery level over time and shows it as a graph
 ./gradlew assembleDebug
 ```
 
-Release builds read the signing key from environment variables: `KEYSTORE_PATH` (default `app/release.keystore`), `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`. The version is set by `appVersionCode` / `appVersionName` in `gradle.properties`.
+Release builds read the signing key from environment variables: `KEYSTORE_PATH` (default `app/release.keystore`), `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`. The version is computed from git (see below).
 
 ```
 ./gradlew bundleRelease
 ```
 
+### Version
+- `versionName` = `appVersion` in `gradle.properties` (e.g. `1.1`) + the number of commits since that line was last changed, counting from 0 (e.g. `1.1.3`). Raise `appVersion` only for larger updates.
+- `versionCode` = the total number of commits, so it increases with every commit.
+- `./gradlew -q :app:printVersion` prints the current values.
+
 ### Release
-1. Raise `appVersionCode` and `appVersionName` in `gradle.properties` and commit to `main`
-2. Push a tag named `v` + `appVersionName`:
-   ```
-   git tag v1.1.0
-   git push origin v1.1.0
-   ```
-3. The Release workflow builds a signed APK and AAB and attaches them to a GitHub Release. Upload the AAB to Google Play.
+1. Commit and push to `main`
+2. Run the **Release** workflow from the Actions tab on GitHub (Run workflow, branch `main`)
+3. The workflow tags the commit as `v` + versionName and attaches `BatteryGraph-v1.1.3-code90.aab` / `.apk` to a GitHub Release. Upload the AAB to Google Play.
 
 ### Tests
 
