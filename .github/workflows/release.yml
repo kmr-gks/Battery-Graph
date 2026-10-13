@@ -1,8 +1,12 @@
 name: Release
 
-# GitHub の Actions 画面の「Run workflow」ボタンで、main から実行する。
-# バージョンは git から自動で決まり、v + バージョン名のタグと Release を作る
+# 次のどちらかで、main から実行する。バージョンは git から自動で決まり、v + バージョン名のタグと Release を作る
+# - gradle.properties の appVersion（バージョンの真ん中の数字）を変えて push したとき（自動）
+# - GitHub の Actions 画面の「Run workflow」ボタン（小さな修正版を出すとき）
 on:
+  push:
+    branches: [ "main" ]
+    paths: [ "gradle.properties" ]
   workflow_dispatch:
 
 permissions:
@@ -13,8 +17,39 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
+  # push のときは、appVersion の行が変わったかを確かめる（ほかの設定の変更ではリリースしない）
+  check:
     if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.check.outputs.release }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check whether appVersion changed
+        id: check
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # push 前のコミットが分からない場合は、最後のコミットだけを見る
+          if ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then BEFORE="HEAD~1"; fi
+          if git diff "${BEFORE}" HEAD -- gradle.properties | grep -qE '^[+-]appVersion='; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "appVersion did not change; skipping release"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  release:
+    needs: check
+    if: needs.check.outputs.release == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

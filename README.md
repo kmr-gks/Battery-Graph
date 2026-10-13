@@ -27,9 +27,10 @@ Release builds read the signing key from environment variables: `KEYSTORE_PATH` 
 - `./gradlew -q :app:printVersion` prints the current values.
 
 ### Release
-1. Commit and push to `main`
-2. Run the **Release** workflow from the Actions tab on GitHub (Run workflow, branch `main`)
-3. The workflow tags the commit as `v` + versionName and attaches `BatteryGraph-v1.1.3-code90.aab` / `.apk` to a GitHub Release. Upload the AAB to Google Play.
+- **Larger update**: raise `appVersion` in `gradle.properties` (e.g. `1.1` → `1.2`) and push to `main`. The **Release** workflow runs automatically.
+- **Small fix**: push to `main`, then run the **Release** workflow from the Actions tab on GitHub (Run workflow, branch `main`).
+
+The workflow tags the commit as `v` + versionName and attaches `BatteryGraph-v1.2.0-code90.aab` / `.apk` to a GitHub Release. Upload the AAB to Google Play.
 
 ### Tests
 
