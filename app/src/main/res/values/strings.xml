@@ -11,6 +11,8 @@
 	<string name="monitor_notification_text">Recording each time the level changes</string>
 	<string name="monitor_action_stop">Stop</string>
 
+	<string name="settings_title">Settings</string>
+	<string name="navigate_back">Back</string>
 	<string name="high_precision_label">High-precision recording</string>
 	<string name="high_precision_description" formatted="false">Records every 1% change (shows a persistent notification)</string>
 

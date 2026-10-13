@@ -25,6 +25,8 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -38,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -60,16 +63,30 @@ import com.gukos.battery_graph.util.ChargeStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BatteryScreen(viewModel: BatteryViewModel) {
+fun BatteryScreen(viewModel: BatteryViewModel, onOpenSettings: () -> Unit) {
     // 画面が見えていない間は収集を止める。records は WhileSubscribed なので DB の監視も止まり、
     // 画面に戻ったときに表示期間の起点が計算し直される
     val records by viewModel.records.collectAsStateWithLifecycle()
     val period by viewModel.period.collectAsStateWithLifecycle()
     val currentStatus by viewModel.currentStatus.collectAsStateWithLifecycle()
 
+    RequestNotificationPermissionOnce(viewModel)
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.app_name)) },
+                actions = {
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(
+                            painterResource(R.drawable.ic_settings),
+                            contentDescription = stringResource(R.string.settings_title)
+                        )
+                    }
+                }
+            )
+        },
         // 横画面でカメラの切り欠きに重ならないようにする
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
@@ -97,7 +114,6 @@ fun BatteryScreen(viewModel: BatteryViewModel) {
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         controls()
-                        HighPrecisionSwitch(viewModel)
                     }
                     BatteryGraph(
                         records = records,
@@ -122,7 +138,6 @@ fun BatteryScreen(viewModel: BatteryViewModel) {
                             .weight(1f)
                             .fillMaxWidth()
                     )
-                    HighPrecisionSwitch(viewModel)
                 }
 
                 // 高さが足りない（小さい画面・大きな文字）: 全体をスクロールし、グラフの高さを確保する
@@ -140,7 +155,6 @@ fun BatteryScreen(viewModel: BatteryViewModel) {
                             .fillMaxWidth()
                             .height(SCROLLING_GRAPH_HEIGHT)
                     )
-                    HighPrecisionSwitch(viewModel)
                 }
             }
         }
@@ -269,53 +283,5 @@ private fun PeriodSelector(selected: GraphPeriod, onSelect: (GraphPeriod) -> Uni
                 }
             )
         }
-    }
-}
-
-@Composable
-private fun HighPrecisionSwitch(viewModel: BatteryViewModel) {
-    val context = LocalContext.current
-    val enabled by viewModel.highPrecisionEnabled.collectAsStateWithLifecycle()
-
-    // 許可の前に出した通知は表示されないため、許可ダイアログの結果が出てからサービスを起動する。
-    // 通知が許可されなくても記録は動く（通知が表示されないだけ）
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { BatteryMonitorService.startIfEnabled(context) }
-
-    fun setEnabled(value: Boolean) {
-        viewModel.setHighPrecisionEnabled(value)
-        if (value) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED
-            ) {
-                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            } else {
-                BatteryMonitorService.startIfEnabled(context)
-            }
-        } else {
-            BatteryMonitorService.stop(context)
-        }
-    }
-
-    // 行全体をスイッチとして扱い、文字の部分を押しても切り替わるようにする。
-    // TalkBack ではラベルと状態がまとめて読み上げられる
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .toggleable(value = enabled, role = Role.Switch, onValueChange = ::setEnabled)
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(stringResource(R.string.high_precision_label))
-            Text(
-                stringResource(R.string.high_precision_description),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Switch(checked = enabled, onCheckedChange = null)
     }
 }

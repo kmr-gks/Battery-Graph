@@ -4,12 +4,18 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import com.gukos.battery_graph.service.BatteryMonitorService
 import com.gukos.battery_graph.ui.screen.BatteryScreen
+import com.gukos.battery_graph.ui.screen.SettingsScreen
 import com.gukos.battery_graph.ui.theme.BatteryGraphTheme
 import com.gukos.battery_graph.ui.viewmodel.BatteryViewModel
 import com.gukos.battery_graph.ui.viewmodel.BatteryViewModelFactory
@@ -33,7 +39,14 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             BatteryGraphTheme {
-                BatteryScreen(viewModel)
+                // 画面は2つだけなので、ナビゲーションのライブラリは使わずに切り替える
+                var showSettings by rememberSaveable { mutableStateOf(false) }
+                if (showSettings) {
+                    BackHandler { showSettings = false }
+                    SettingsScreen(viewModel, onBack = { showSettings = false })
+                } else {
+                    BatteryScreen(viewModel, onOpenSettings = { showSettings = true })
+                }
             }
         }
     }

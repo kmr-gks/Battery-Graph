@@ -35,7 +35,7 @@ Charge Trail は、スマートフォンのバッテリー残量の推移をグ�
 ・充電の区間を色分け：充電していた時間がグラフ上でひと目で分かります
 ・減少ペースと残り時間の目安：直近の減り方から「約○%/時」「残り約○時間」を表示します
 ・現在の状態：残量、充電中かどうか、バッテリーの温度と電圧を表示します
-・高精度記録（任意）：オンにすると、残量が1%変わるたびに記録し、通知に現在の残量を表示します
+・高精度記録：残量が1%変わるたびに記録し、通知に現在の残量を表示します（設定画面でオフにできます）
 ・ダークテーマに対応
 
 ■ 記録のしくみ
@@ -59,7 +59,7 @@ Features
 - Charging periods highlighted: see at a glance when your phone was charging
 - Drain rate and time left: shows "about X%/h" and "about Xh left" based on recent usage
 - Current status: battery level, charging state, temperature, and voltage
-- High-precision recording (optional): records every 1% change and shows the current level in a notification
+- High-precision recording: records every 1% change and shows the current level in a notification (can be turned off in Settings)
 - Dark theme support
 
 How recording works
@@ -88,18 +88,18 @@ Privacy
 ### フォアグラウンド サービス
 
 - 種類：**特殊な用途（specialUse）**
-- 用途：ユーザーが「高精度記録」をオンにした場合のみ動作する。初期設定はオフ
+- 用途：「高精度記録」がオンの間だけ動作する。初期設定はオンで、初回起動時に通知の許可を求める。ユーザーは設定画面または通知の「停止」ボタンでいつでもオフにできる
 
 説明（en）:
 
 ```
-When the user turns on "High-precision recording" (off by default), the app runs a foreground service that listens for ACTION_BATTERY_CHANGED and records the battery level and charging state each time they change. This broadcast cannot be received in the background without a running process, and WorkManager runs at most every 15 minutes, so a foreground service is the only way to record every 1% change. The service does no polling or network access, and the persistent notification shows the current battery level. The user can turn it off at any time from the main screen.
+While "High-precision recording" is on (on by default; the app asks for notification permission on first launch), the app runs a foreground service that listens for ACTION_BATTERY_CHANGED and records the battery level and charging state each time they change. This broadcast cannot be received in the background without a running process, and WorkManager runs at most every 15 minutes, so a foreground service is the only way to record every 1% change. The service does no polling or network access, and the persistent notification shows the current battery level. The user can turn it off at any time from the Settings screen or with the "Stop" button in the notification.
 ```
 
 説明（ja）:
 
 ```
-ユーザーが「高精度記録」をオンにした場合（初期設定はオフ）のみ、フォアグラウンドサービスで ACTION_BATTERY_CHANGED を受信し、残量と充電状態が変わるたびに記録します。このブロードキャストはプロセスが動作していないと受信できず、WorkManager は最短でも15分間隔のため、1%ごとの変化を記録するにはフォアグラウンドサービスが必要です。サービスは定期的なポーリングやネットワーク通信を行わず、常駐通知には現在の残量を表示します。ユーザーはメイン画面からいつでもオフにできます。
+「高精度記録」がオンの間（初期設定はオン。初回起動時に通知の許可を求める）だけ、フォアグラウンドサービスで ACTION_BATTERY_CHANGED を受信し、残量と充電状態が変わるたびに記録します。このブロードキャストはプロセスが動作していないと受信できず、WorkManager は最短でも15分間隔のため、1%ごとの変化を記録するにはフォアグラウンドサービスが必要です。サービスは定期的なポーリングやネットワーク通信を行わず、常駐通知には現在の残量を表示します。ユーザーは設定画面または通知の「停止」ボタンで、いつでもオフにできます。
 ```
 
 システムによって処理が延期・中断された場合の影響（en）:
@@ -110,11 +110,10 @@ Battery level changes that happen while the service is stopped are not recorded,
 
 動画（提出用の撮影手順）:
 
-1. アプリを起動し、メイン画面の「高精度記録」スイッチをオンにする
-2. 通知の許可ダイアログで「許可」を選ぶ
-3. ホーム画面に戻り、通知パネルを開いて残量の通知が表示されていることを見せる
-4. （可能なら）充電ケーブルを抜き差しし、通知が「充電中」に変わることを見せる
-5. アプリに戻り、スイッチをオフにすると通知が消えることを見せる
+1. アプリを初めて起動し、通知の許可ダイアログで「許可」を選ぶ（高精度記録は初期設定でオン）
+2. ホーム画面に戻り、通知パネルを開いて残量の通知が表示されていることを見せる
+3. （可能なら）充電ケーブルを抜き差しし、通知が「充電中」に変わることを見せる
+4. アプリに戻り、右上の歯車から設定画面を開いて「高精度記録」をオフにすると、通知が消えることを見せる
 
 動画は YouTube などに限定公開でアップロードし、その URL を入力します。
 

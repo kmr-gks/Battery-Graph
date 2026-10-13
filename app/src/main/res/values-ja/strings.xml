@@ -9,6 +9,8 @@
 	<string name="monitor_notification_text">残量が変わるたびに記録しています</string>
 	<string name="monitor_action_stop">停止</string>
 
+	<string name="settings_title">設定</string>
+	<string name="navigate_back">戻る</string>
 	<string name="high_precision_label">高精度記録</string>
 	<string name="high_precision_description" formatted="false">残量が1%変わるたびに記録します（常に通知を表示）</string>
 

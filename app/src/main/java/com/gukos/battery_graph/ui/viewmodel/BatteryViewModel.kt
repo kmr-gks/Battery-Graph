@@ -24,6 +24,13 @@ class BatteryViewModel(
         monitorSettings.setHighPrecisionEnabled(enabled)
     }
 
+    val notificationPermissionRequested: Boolean
+        get() = monitorSettings.notificationPermissionRequested
+
+    fun markNotificationPermissionRequested() {
+        monitorSettings.notificationPermissionRequested = true
+    }
+
     private val _period = MutableStateFlow(GraphPeriod.HOURS_24)
     val period: StateFlow<GraphPeriod> = _period.asStateFlow()
 
