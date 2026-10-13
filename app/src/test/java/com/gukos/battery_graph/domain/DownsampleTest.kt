@@ -53,6 +53,19 @@ class DownsampleTest {
     }
 
     @Test
+    fun keepsPeaksOfGivenValue() {
+        // 残量は一定で、温度だけが 20〜40℃ を行き来する
+        val records = List(10_000) {
+            BatteryRecord(timestamp = it * 60_000L, level = 50, temperature = 200 + (it % 201))
+        }
+
+        val result = downsample(records, buckets = 100) { (it.temperature ?: 0) / 10.0 }
+
+        assertEquals(400, result.maxOf { it.temperature!! })
+        assertEquals(200, result.minOf { it.temperature!! })
+    }
+
+    @Test
     fun keepsChargingTransitions() {
         // 一定の残量のまま、1件だけ充電中になる
         val records = List(10_000) { record(it, 50, isCharging = it == 5_000) }

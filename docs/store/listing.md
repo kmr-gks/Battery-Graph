@@ -32,6 +32,7 @@ Charge Trail は、スマートフォンのバッテリー残量の推移をグ�
 
 ■ 主な機能
 ・残量の履歴グラフ：6時間／24時間／7日／30日の期間で表示を切り替えられます
+・温度と電圧のグラフ：残量と同じ期間で、バッテリーの温度と電圧の推移も確認できます
 ・充電の区間を色分け：充電していた時間がグラフ上でひと目で分かります
 ・減少ペースと残り時間の目安：直近の減り方から「約○%/時」「残り約○時間」を表示します
 ・現在の状態：残量、充電中かどうか、バッテリーの温度と電圧を表示します
@@ -56,6 +57,7 @@ When your battery seems to drain faster than usual, you can look back and see ex
 
 Features
 - Battery history graph: switch between 6 hours, 24 hours, 7 days, and 30 days
+- Temperature and voltage graphs: see how battery temperature and voltage changed over the same periods
 - Charging periods highlighted: see at a glance when your phone was charging
 - Drain rate and time left: shows "about X%/h" and "about Xh left" based on recent usage
 - Current status: battery level, charging state, temperature, and voltage

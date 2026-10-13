@@ -34,14 +34,22 @@ class BatteryRepository(
         writeMutex.withLock { insert(snapshot) }
     }
 
-    // BATTERY_CHANGED は電圧・温度の変化でも頻繁に届くため、残量か充電状態が変わったときだけ記録する
+    // BATTERY_CHANGED は電圧・温度の小さな変化でも頻繁に届くため、残量か充電状態が変わったとき、
+    // または温度が前回の記録から 1℃ 以上変わったときだけ記録する
     suspend fun recordIfChanged(snapshot: BatterySnapshot) {
         writeMutex.withLock {
             val latest = dao.getLatest()
-            if (latest?.level == snapshot.level && latest.isCharging == snapshot.isCharging) return
+            if (latest?.level == snapshot.level &&
+                latest.isCharging == snapshot.isCharging &&
+                !temperatureChanged(latest.temperature, snapshot.temperature)
+            ) return
             insert(snapshot)
         }
     }
+
+    private fun temperatureChanged(recorded: Int?, current: Int?): Boolean =
+        recorded != null && current != null &&
+            kotlin.math.abs(current - recorded) >= TEMPERATURE_THRESHOLD
 
     /** 保持期間を過ぎた記録を削除し、削除件数を返す */
     suspend fun deleteExpiredRecords(): Int {
@@ -63,5 +71,8 @@ class BatteryRepository(
 
     companion object {
         const val RETENTION_DAYS = 90L
+
+        // 温度の変化で記録するしきい値（0.1℃単位。10 = 1℃）
+        private const val TEMPERATURE_THRESHOLD = 10
     }
 }

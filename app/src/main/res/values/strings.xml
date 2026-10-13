@@ -39,4 +39,10 @@
 
 	<string name="graph_empty">The graph appears once two or more records are saved</string>
 	<string name="graph_description">Battery level graph for the last %1$s. Now %2$d%%, highest %3$d%%, lowest %4$d%%.</string>
+	<string name="metric_level">Level</string>
+	<string name="metric_temperature">Temperature</string>
+	<string name="metric_voltage">Voltage</string>
+	<string name="graph_description_temperature">Battery temperature graph for the last %1$s. Now %2$.1f℃, highest %3$.1f℃, lowest %4$.1f℃.</string>
+	<string name="graph_description_voltage">Battery voltage graph for the last %1$s. Now %2$.2fV, highest %3$.2fV, lowest %4$.2fV.</string>
+	<string name="graph_empty_metric">No temperature or voltage records in this period yet</string>
 </resources>

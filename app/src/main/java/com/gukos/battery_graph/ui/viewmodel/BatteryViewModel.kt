@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gukos.battery_graph.data.entity.BatteryRecord
 import com.gukos.battery_graph.repository.BatteryRepository
+import com.gukos.battery_graph.ui.graph.GraphMetric
 import com.gukos.battery_graph.ui.graph.GraphPeriod
 import com.gukos.battery_graph.util.BatterySnapshot
 import com.gukos.battery_graph.util.MonitorSettings
@@ -36,6 +37,13 @@ class BatteryViewModel(
 
     fun selectPeriod(period: GraphPeriod) {
         _period.value = period
+    }
+
+    private val _metric = MutableStateFlow(GraphMetric.LEVEL)
+    val metric: StateFlow<GraphMetric> = _metric.asStateFlow()
+
+    fun selectMetric(metric: GraphMetric) {
+        _metric.value = metric
     }
 
     /** 選択中の期間の記録（古い順） */

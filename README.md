@@ -5,6 +5,7 @@ An Android app that records your battery level over time and shows it as a graph
 バッテリー残量の推移をグラフで記録する Android アプリです。英語/日本語対応
 
 - Battery history graph (6h / 24h / 7d / 30d), with charging periods highlighted
+- Battery temperature and voltage graphs
 - Drain rate and estimated time left
 - Optional high-precision recording (records every 1% change via a foreground service)
 - Japanese and English

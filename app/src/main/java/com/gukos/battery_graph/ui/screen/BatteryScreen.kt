@@ -55,6 +55,7 @@ import com.gukos.battery_graph.data.entity.BatteryRecord
 import com.gukos.battery_graph.domain.DischargeEstimate
 import com.gukos.battery_graph.service.BatteryMonitorService
 import com.gukos.battery_graph.ui.graph.BatteryGraph
+import com.gukos.battery_graph.ui.graph.GraphMetric
 import com.gukos.battery_graph.ui.graph.GraphPeriod
 import com.gukos.battery_graph.ui.theme.chargingColor
 import com.gukos.battery_graph.ui.viewmodel.BatteryViewModel
@@ -68,6 +69,7 @@ fun BatteryScreen(viewModel: BatteryViewModel, onOpenSettings: () -> Unit) {
     // 画面に戻ったときに表示期間の起点が計算し直される
     val records by viewModel.records.collectAsStateWithLifecycle()
     val period by viewModel.period.collectAsStateWithLifecycle()
+    val metric by viewModel.metric.collectAsStateWithLifecycle()
     val currentStatus by viewModel.currentStatus.collectAsStateWithLifecycle()
 
     RequestNotificationPermissionOnce(viewModel)
@@ -99,6 +101,7 @@ fun BatteryScreen(viewModel: BatteryViewModel, onOpenSettings: () -> Unit) {
             val controls = @Composable {
                 StatusCard(currentStatus, records)
                 PeriodSelector(period, viewModel::selectPeriod)
+                MetricSelector(metric, viewModel::selectMetric)
             }
             when {
                 // 横長: 左に操作、右にグラフを大きく表示する
@@ -118,6 +121,7 @@ fun BatteryScreen(viewModel: BatteryViewModel, onOpenSettings: () -> Unit) {
                     BatteryGraph(
                         records = records,
                         period = period,
+                        metric = metric,
                         modifier = Modifier
                             .weight(0.58f)
                             .fillMaxHeight()
@@ -134,6 +138,7 @@ fun BatteryScreen(viewModel: BatteryViewModel, onOpenSettings: () -> Unit) {
                     BatteryGraph(
                         records = records,
                         period = period,
+                        metric = metric,
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
@@ -151,6 +156,7 @@ fun BatteryScreen(viewModel: BatteryViewModel, onOpenSettings: () -> Unit) {
                     BatteryGraph(
                         records = records,
                         period = period,
+                        metric = metric,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(SCROLLING_GRAPH_HEIGHT)
@@ -281,6 +287,22 @@ private fun PeriodSelector(selected: GraphPeriod, onSelect: (GraphPeriod) -> Uni
                         modifier = Modifier.clearAndSetSemantics { contentDescription = description }
                     )
                 }
+            )
+        }
+    }
+}
+
+/** グラフに表示する項目（残量・温度・電圧）の切り替え */
+@Composable
+private fun MetricSelector(selected: GraphMetric, onSelect: (GraphMetric) -> Unit) {
+    val metrics = GraphMetric.entries
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        metrics.forEachIndexed { index, metric ->
+            SegmentedButton(
+                selected = metric == selected,
+                onClick = { onSelect(metric) },
+                shape = SegmentedButtonDefaults.itemShape(index, metrics.size),
+                label = { Text(stringResource(metric.labelRes)) }
             )
         }
     }

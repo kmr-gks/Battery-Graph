@@ -49,7 +49,7 @@ private const val MAX_TICKS = 5
 private const val DOWNSAMPLE_BUCKETS = 600
 
 /**
- * 残量の推移グラフ。充電中の区間は色を変えて描く。
+ * 残量・温度・電圧の推移グラフ。充電中の区間は色を変えて描く。
  *
  * @param records 古い順の記録
  */
@@ -57,12 +57,21 @@ private const val DOWNSAMPLE_BUCKETS = 600
 fun BatteryGraph(
     records: List<BatteryRecord>,
     period: GraphPeriod,
+    metric: GraphMetric,
     modifier: Modifier = Modifier
 ) {
-    if (records.size < 2) {
+    // 値のない記録（DB version 1 の温度・電圧など）は描かない。
+    // 7日・30日表示では記録が数千件になるため、画面の幅に見合う数に間引く
+    val points = remember(records, metric) {
+        downsample(records.filter { metric.valueOf(it) != null }, DOWNSAMPLE_BUCKETS) { metric.valueOf(it)!! }
+    }
+    if (points.size < 2) {
         Box(modifier = modifier, contentAlignment = Alignment.Center) {
             Text(
-                stringResource(R.string.graph_empty),
+                stringResource(
+                    if (records.size < 2 || metric == GraphMetric.LEVEL) R.string.graph_empty
+                    else R.string.graph_empty_metric
+                ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -75,16 +84,20 @@ fun BatteryGraph(
     val textColor = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
     val gridColor = MaterialTheme.colorScheme.outlineVariant.toArgb()
     // グラフは画像として扱われ読み上げられないため、要約を TalkBack 用の説明にする
-    val summary = stringResource(
-        R.string.graph_description,
-        stringResource(period.descriptionRes),
-        records.last().level,
-        records.maxOf { it.level },
-        records.minOf { it.level }
-    )
-
-    // 7日・30日表示では記録が数千件になるため、画面の幅に見合う数に間引く
-    val points = remember(records) { downsample(records, DOWNSAMPLE_BUCKETS) }
+    val values = points.map { metric.valueOf(it)!! }
+    val periodText = stringResource(period.descriptionRes)
+    val summary = when (metric) {
+        GraphMetric.LEVEL -> stringResource(
+            R.string.graph_description, periodText,
+            values.last().toInt(), values.max().toInt(), values.min().toInt()
+        )
+        GraphMetric.TEMPERATURE -> stringResource(
+            R.string.graph_description_temperature, periodText, values.last(), values.max(), values.min()
+        )
+        GraphMetric.VOLTAGE -> stringResource(
+            R.string.graph_description_voltage, periodText, values.last(), values.max(), values.min()
+        )
+    }
 
     AndroidView(
         modifier = modifier,
@@ -118,15 +131,7 @@ fun BatteryGraph(
                 setXAxisRenderer(
                     TimeXAxisRenderer(this@chart, formatter)
                 )
-                axisLeft.apply {
-                    axisMinimum = 0f
-                    axisMaximum = 100f
-                    setLabelCount(6, true)
-                    setDrawAxisLine(false)
-                    valueFormatter = object : ValueFormatter() {
-                        override fun getFormattedValue(value: Float) = "${value.toInt()}%"
-                    }
-                }
+                axisLeft.setDrawAxisLine(false)
             }
         },
         update = { chart ->
@@ -138,8 +143,8 @@ fun BatteryGraph(
             formatter.baseTime = baseTime
             formatter.updateFormats(chart.context)
 
-            val entries = points.map {
-                Entry(formatter.toX(it.timestamp), it.level.toFloat())
+            val entries = points.mapIndexed { i, record ->
+                Entry(formatter.toX(record.timestamp), values[i].toFloat())
             }
             val dataSet = LineDataSet(entries, "Battery").apply {
                 // 各点の色はその点から次の点までの線の色になる
@@ -147,10 +152,12 @@ fun BatteryGraph(
                 setDrawCircles(false)
                 setDrawValues(false)
                 lineWidth = 2f
-                setDrawFilled(true)
+                // 塗りつぶしは 0% からの量が意味を持つ残量だけ
+                setDrawFilled(metric == GraphMetric.LEVEL)
                 fillColor = lineColor
                 fillAlpha = 40
             }
+            setUpValueAxis(chart, metric, values)
 
             chart.xAxis.apply {
                 this.textColor = textColor
@@ -163,16 +170,47 @@ fun BatteryGraph(
 
             chart.data = LineData(dataSet)
             chart.contentDescription = summary
-            // 期間を切り替えたらズームを解除する
-            if (chart.tag != period) {
+            // 期間や項目を切り替えたらズームを解除する
+            if (chart.tag != period to metric) {
                 chart.fitScreen()
-                chart.tag = period
+                chart.tag = period to metric
             }
             // 軸の範囲はデータ設定後に決まるので、表示幅の制限はその後に設定する
             chart.setVisibleXRangeMinimum(MIN_VISIBLE_MINUTES)
             chart.invalidate()
         }
     )
+}
+
+/** 縦軸の範囲と書式。残量は 0〜100% に固定し、温度・電圧は値の範囲に余白を足して決める */
+private fun setUpValueAxis(chart: LineChart, metric: GraphMetric, values: List<Double>) {
+    chart.axisLeft.apply {
+        when (metric) {
+            GraphMetric.LEVEL -> {
+                axisMinimum = 0f
+                axisMaximum = 100f
+                granularity = 1f
+                setLabelCount(6, true)
+            }
+            GraphMetric.TEMPERATURE, GraphMetric.VOLTAGE -> {
+                // 値の幅が小さくても目盛りが細かくなりすぎないよう、最低限の幅と余白を取る
+                val minSpan = if (metric == GraphMetric.TEMPERATURE) 4.0 else 0.2
+                val center = (values.max() + values.min()) / 2
+                val half = maxOf(values.max() - values.min(), minSpan) / 2 * 1.2
+                axisMinimum = (center - half).toFloat()
+                axisMaximum = (center + half).toFloat()
+                granularity = if (metric == GraphMetric.TEMPERATURE) 1f else 0.05f
+                setLabelCount(6, false)
+            }
+        }
+        valueFormatter = object : ValueFormatter() {
+            override fun getFormattedValue(value: Float) = when (metric) {
+                GraphMetric.LEVEL -> "${value.toInt()}%"
+                GraphMetric.TEMPERATURE -> "%.0f℃".format(value)
+                GraphMetric.VOLTAGE -> "%.2fV".format(value)
+            }
+        }
+    }
 }
 
 /**

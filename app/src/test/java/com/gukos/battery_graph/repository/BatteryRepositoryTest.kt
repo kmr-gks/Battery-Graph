@@ -75,10 +75,23 @@ class BatteryRepositoryTest {
     fun recordIfChanged_skipsWhenLevelAndChargingUnchanged() = runTest {
         repository.recordIfChanged(snapshot(level = 80))
         currentTime += MINUTE
-        // 温度・電圧だけが変わっても記録しない
-        repository.recordIfChanged(snapshot(level = 80).copy(temperature = 300, voltage = 3900))
+        // 電圧の変化や 1℃ 未満の温度の変化だけでは記録しない（snapshot() の温度は 25.0℃）
+        repository.recordIfChanged(snapshot(level = 80).copy(temperature = 259, voltage = 3900))
 
         assertEquals(1, dao.all.size)
+    }
+
+    @Test
+    fun recordIfChanged_savesWhenTemperatureChangesByOneDegree() = runTest {
+        repository.recordIfChanged(snapshot(level = 80).copy(temperature = 250))
+        currentTime += MINUTE
+        // 0.9℃ の変化では記録しない
+        repository.recordIfChanged(snapshot(level = 80).copy(temperature = 259))
+        currentTime += MINUTE
+        // 1℃ 以上の変化で記録する
+        repository.recordIfChanged(snapshot(level = 80).copy(temperature = 260))
+
+        assertEquals(listOf(250, 260), dao.all.map { it.temperature })
     }
 
     @Test
