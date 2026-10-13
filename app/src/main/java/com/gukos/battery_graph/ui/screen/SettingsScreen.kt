@@ -21,6 +21,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -39,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gukos.battery_graph.R
 import com.gukos.battery_graph.service.BatteryMonitorService
 import com.gukos.battery_graph.ui.viewmodel.BatteryViewModel
+import com.gukos.battery_graph.util.TemperatureUnit
 
 /** 設定画面 */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,7 +73,71 @@ fun SettingsScreen(viewModel: BatteryViewModel, onBack: () -> Unit) {
                 .verticalScroll(rememberScrollState())
         ) {
             HighPrecisionSwitch(viewModel)
+
+            Text(
+                stringResource(R.string.settings_graph_section),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 24.dp, bottom = 4.dp)
+            )
+            val showTemperature by viewModel.showTemperature.collectAsStateWithLifecycle()
+            val showVoltage by viewModel.showVoltage.collectAsStateWithLifecycle()
+            val temperatureUnit by viewModel.temperatureUnit.collectAsStateWithLifecycle()
+            SettingSwitch(
+                label = stringResource(R.string.show_temperature_label),
+                description = stringResource(R.string.show_temperature_description),
+                checked = showTemperature,
+                onCheckedChange = viewModel::setShowTemperature
+            )
+            SettingSwitch(
+                label = stringResource(R.string.show_voltage_label),
+                description = stringResource(R.string.show_voltage_description),
+                checked = showVoltage,
+                onCheckedChange = viewModel::setShowVoltage
+            )
+            Text(
+                stringResource(R.string.temperature_unit_label),
+                modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
+            )
+            val units = TemperatureUnit.entries
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                units.forEachIndexed { index, unit ->
+                    SegmentedButton(
+                        selected = unit == temperatureUnit,
+                        onClick = { viewModel.setTemperatureUnit(unit) },
+                        shape = SegmentedButtonDefaults.itemShape(index, units.size),
+                        label = { Text(unit.symbol) }
+                    )
+                }
+            }
         }
+    }
+}
+
+/** ラベルと説明つきのスイッチ。行全体を押して切り替えられ、TalkBack ではまとめて読み上げられる */
+@Composable
+private fun SettingSwitch(
+    label: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange)
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(label)
+            Text(
+                description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Switch(checked = checked, onCheckedChange = null)
     }
 }
 
@@ -124,23 +192,10 @@ private fun HighPrecisionSwitch(viewModel: BatteryViewModel) {
         }
     }
 
-    // 行全体をスイッチとして扱い、文字の部分を押しても切り替わるようにする。
-    // TalkBack ではラベルと状態がまとめて読み上げられる
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .toggleable(value = enabled, role = Role.Switch, onValueChange = ::setEnabled)
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(stringResource(R.string.high_precision_label))
-            Text(
-                stringResource(R.string.high_precision_description),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Switch(checked = enabled, onCheckedChange = null)
-    }
+    SettingSwitch(
+        label = stringResource(R.string.high_precision_label),
+        description = stringResource(R.string.high_precision_description),
+        checked = enabled,
+        onCheckedChange = ::setEnabled
+    )
 }

@@ -8,6 +8,7 @@ import com.gukos.battery_graph.data.database.AppDatabase
 import com.gukos.battery_graph.repository.BatteryRepository
 import com.gukos.battery_graph.util.BatteryManagerWrapper
 import com.gukos.battery_graph.util.BatteryStatusSource
+import com.gukos.battery_graph.util.GraphSettings
 import com.gukos.battery_graph.util.MonitorSettings
 import com.gukos.battery_graph.worker.BatteryWorker
 import java.util.concurrent.TimeUnit
@@ -22,6 +23,8 @@ class BatteryGraphApplication : Application() {
     }
 
     val monitorSettings: MonitorSettings by lazy { MonitorSettings(this) }
+
+    val graphSettings: GraphSettings by lazy { GraphSettings(this) }
 
     override fun onCreate() {
         super.onCreate()

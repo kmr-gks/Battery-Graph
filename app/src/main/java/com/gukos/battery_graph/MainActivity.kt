@@ -25,7 +25,7 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: BatteryViewModel by viewModels {
         val app = application as BatteryGraphApplication
-        BatteryViewModelFactory(app.repository, app.monitorSettings)
+        BatteryViewModelFactory(app.repository, app.monitorSettings, app.graphSettings)
     }
 
     // 画面表示中だけ残量の変化を受け取る（バックグラウンドの記録は常駐サービスと WorkManager が担当）

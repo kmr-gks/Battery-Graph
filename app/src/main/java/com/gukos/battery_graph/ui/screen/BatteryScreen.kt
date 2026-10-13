@@ -55,12 +55,12 @@ import com.gukos.battery_graph.data.entity.BatteryRecord
 import com.gukos.battery_graph.domain.DischargeEstimate
 import com.gukos.battery_graph.service.BatteryMonitorService
 import com.gukos.battery_graph.ui.graph.BatteryGraph
-import com.gukos.battery_graph.ui.graph.GraphMetric
 import com.gukos.battery_graph.ui.graph.GraphPeriod
 import com.gukos.battery_graph.ui.theme.chargingColor
 import com.gukos.battery_graph.ui.viewmodel.BatteryViewModel
 import com.gukos.battery_graph.util.BatterySnapshot
 import com.gukos.battery_graph.util.ChargeStatus
+import com.gukos.battery_graph.util.TemperatureUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,7 +69,9 @@ fun BatteryScreen(viewModel: BatteryViewModel, onOpenSettings: () -> Unit) {
     // 画面に戻ったときに表示期間の起点が計算し直される
     val records by viewModel.records.collectAsStateWithLifecycle()
     val period by viewModel.period.collectAsStateWithLifecycle()
-    val metric by viewModel.metric.collectAsStateWithLifecycle()
+    val showTemperature by viewModel.showTemperature.collectAsStateWithLifecycle()
+    val showVoltage by viewModel.showVoltage.collectAsStateWithLifecycle()
+    val temperatureUnit by viewModel.temperatureUnit.collectAsStateWithLifecycle()
     val currentStatus by viewModel.currentStatus.collectAsStateWithLifecycle()
 
     RequestNotificationPermissionOnce(viewModel)
@@ -99,9 +101,8 @@ fun BatteryScreen(viewModel: BatteryViewModel, onOpenSettings: () -> Unit) {
                 .padding(horizontal = 16.dp)
         ) {
             val controls = @Composable {
-                StatusCard(currentStatus, records)
+                StatusCard(currentStatus, records, temperatureUnit)
                 PeriodSelector(period, viewModel::selectPeriod)
-                MetricSelector(metric, viewModel::selectMetric)
             }
             when {
                 // 横長: 左に操作、右にグラフを大きく表示する
@@ -121,7 +122,9 @@ fun BatteryScreen(viewModel: BatteryViewModel, onOpenSettings: () -> Unit) {
                     BatteryGraph(
                         records = records,
                         period = period,
-                        metric = metric,
+                        showTemperature = showTemperature,
+                        showVoltage = showVoltage,
+                        temperatureUnit = temperatureUnit,
                         modifier = Modifier
                             .weight(0.58f)
                             .fillMaxHeight()
@@ -138,7 +141,9 @@ fun BatteryScreen(viewModel: BatteryViewModel, onOpenSettings: () -> Unit) {
                     BatteryGraph(
                         records = records,
                         period = period,
-                        metric = metric,
+                        showTemperature = showTemperature,
+                        showVoltage = showVoltage,
+                        temperatureUnit = temperatureUnit,
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
@@ -156,7 +161,9 @@ fun BatteryScreen(viewModel: BatteryViewModel, onOpenSettings: () -> Unit) {
                     BatteryGraph(
                         records = records,
                         period = period,
-                        metric = metric,
+                        showTemperature = showTemperature,
+                        showVoltage = showVoltage,
+                        temperatureUnit = temperatureUnit,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(SCROLLING_GRAPH_HEIGHT)
@@ -173,7 +180,7 @@ private val SCROLLING_GRAPH_HEIGHT = 280.dp
 
 /** 現在の残量・充電状態・温度・電圧と、減少ペースの目安 */
 @Composable
-private fun StatusCard(status: BatterySnapshot?, records: List<BatteryRecord>) {
+private fun StatusCard(status: BatterySnapshot?, records: List<BatteryRecord>, temperatureUnit: TemperatureUnit) {
     // 画面を開いた直後で最新状態が届いていなければ、最後の記録を表示する
     val level = status?.level ?: records.lastOrNull()?.level
     val isCharging = status?.isCharging ?: (records.lastOrNull()?.isCharging == true)
@@ -218,7 +225,7 @@ private fun StatusCard(status: BatterySnapshot?, records: List<BatteryRecord>) {
                     Text(
                         text = stringResource(
                             R.string.status_details,
-                            status.temperature / 10.0,
+                            temperatureUnit.format(status.temperature),
                             status.voltage / 1000.0
                         ),
                         style = MaterialTheme.typography.bodyMedium,
@@ -287,22 +294,6 @@ private fun PeriodSelector(selected: GraphPeriod, onSelect: (GraphPeriod) -> Uni
                         modifier = Modifier.clearAndSetSemantics { contentDescription = description }
                     )
                 }
-            )
-        }
-    }
-}
-
-/** グラフに表示する項目（残量・温度・電圧）の切り替え */
-@Composable
-private fun MetricSelector(selected: GraphMetric, onSelect: (GraphMetric) -> Unit) {
-    val metrics = GraphMetric.entries
-    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-        metrics.forEachIndexed { index, metric ->
-            SegmentedButton(
-                selected = metric == selected,
-                onClick = { onSelect(metric) },
-                shape = SegmentedButtonDefaults.itemShape(index, metrics.size),
-                label = { Text(stringResource(metric.labelRes)) }
             )
         }
     }

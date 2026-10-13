@@ -1,6 +1,7 @@
 package com.gukos.battery_graph.ui.graph
 
 import android.content.Context
+import android.graphics.DashPathEffect
 import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +15,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.Legend
+import com.github.mikephil.charting.components.LegendEntry
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.components.YAxis
 import com.github.mikephil.charting.data.Entry
@@ -25,6 +28,9 @@ import com.gukos.battery_graph.R
 import com.gukos.battery_graph.data.entity.BatteryRecord
 import com.gukos.battery_graph.domain.downsample
 import com.gukos.battery_graph.ui.theme.chargingColor
+import com.gukos.battery_graph.ui.theme.temperatureColor
+import com.gukos.battery_graph.ui.theme.voltageColor
+import com.gukos.battery_graph.util.TemperatureUnit
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -49,7 +55,8 @@ private const val MAX_TICKS = 5
 private const val DOWNSAMPLE_BUCKETS = 600
 
 /**
- * 残量・温度・電圧の推移グラフ。充電中の区間は色を変えて描く。
+ * 残量の推移グラフ。充電中の区間は色を変えて描く。
+ * 設定に応じて、温度を右の縦軸で、電圧を目盛りなしの点線で重ねて描く。
  *
  * @param records 古い順の記録
  */
@@ -57,21 +64,15 @@ private const val DOWNSAMPLE_BUCKETS = 600
 fun BatteryGraph(
     records: List<BatteryRecord>,
     period: GraphPeriod,
-    metric: GraphMetric,
+    showTemperature: Boolean,
+    showVoltage: Boolean,
+    temperatureUnit: TemperatureUnit,
     modifier: Modifier = Modifier
 ) {
-    // 値のない記録（DB version 1 の温度・電圧など）は描かない。
-    // 7日・30日表示では記録が数千件になるため、画面の幅に見合う数に間引く
-    val points = remember(records, metric) {
-        downsample(records.filter { metric.valueOf(it) != null }, DOWNSAMPLE_BUCKETS) { metric.valueOf(it)!! }
-    }
-    if (points.size < 2) {
+    if (records.size < 2) {
         Box(modifier = modifier, contentAlignment = Alignment.Center) {
             Text(
-                stringResource(
-                    if (records.size < 2 || metric == GraphMetric.LEVEL) R.string.graph_empty
-                    else R.string.graph_empty_metric
-                ),
+                stringResource(R.string.graph_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -79,24 +80,59 @@ fun BatteryGraph(
         return
     }
 
+    // 7日・30日表示では記録が数千件になるため、項目ごとに画面の幅に見合う数に間引く。
+    // 温度・電圧のない記録（DB version 1）はその線に描かない
+    val levelPoints = remember(records) { downsample(records, DOWNSAMPLE_BUCKETS) }
+    val temperaturePoints = remember(records, showTemperature) {
+        if (!showTemperature) emptyList()
+        else downsample(records.filter { it.temperature != null }, DOWNSAMPLE_BUCKETS) { it.temperature!!.toDouble() }
+    }
+    val voltagePoints = remember(records, showVoltage) {
+        if (!showVoltage) emptyList()
+        else downsample(records.filter { it.voltage != null }, DOWNSAMPLE_BUCKETS) { it.voltage!!.toDouble() }
+    }
+
     val lineColor = MaterialTheme.colorScheme.primary.toArgb()
     val chargeColor = chargingColor().toArgb()
+    val temperatureColor = temperatureColor().toArgb()
+    val voltageColor = voltageColor().toArgb()
     val textColor = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
     val gridColor = MaterialTheme.colorScheme.outlineVariant.toArgb()
+
+    // 凡例には各項目の現在（最新）の値を出す。電圧は目盛りがないため、値はここでだけ分かる
+    val legendLabels = buildList {
+        add(stringResource(R.string.legend_level, levelPoints.last().level))
+        temperaturePoints.lastOrNull()?.let {
+            add(stringResource(R.string.legend_temperature, temperatureUnit.format(it.temperature!!)))
+        }
+        voltagePoints.lastOrNull()?.let { add(stringResource(R.string.legend_voltage, it.voltage!! / 1000.0)) }
+    }
+
     // グラフは画像として扱われ読み上げられないため、要約を TalkBack 用の説明にする
-    val values = points.map { metric.valueOf(it)!! }
-    val periodText = stringResource(period.descriptionRes)
-    val summary = when (metric) {
-        GraphMetric.LEVEL -> stringResource(
-            R.string.graph_description, periodText,
-            values.last().toInt(), values.max().toInt(), values.min().toInt()
+    val summary = buildString {
+        append(
+            stringResource(
+                R.string.graph_description,
+                stringResource(period.descriptionRes),
+                records.last().level,
+                records.maxOf { it.level },
+                records.minOf { it.level }
+            )
         )
-        GraphMetric.TEMPERATURE -> stringResource(
-            R.string.graph_description_temperature, periodText, values.last(), values.max(), values.min()
-        )
-        GraphMetric.VOLTAGE -> stringResource(
-            R.string.graph_description_voltage, periodText, values.last(), values.max(), values.min()
-        )
+        if (temperaturePoints.isNotEmpty()) {
+            val temperatures = temperaturePoints.map { it.temperature!! }
+            append(' ').append(
+                stringResource(
+                    R.string.graph_description_temperature,
+                    temperatureUnit.format(temperatures.last()),
+                    temperatureUnit.format(temperatures.max()),
+                    temperatureUnit.format(temperatures.min())
+                )
+            )
+        }
+        voltagePoints.lastOrNull()?.let {
+            append(' ').append(stringResource(R.string.graph_description_voltage, it.voltage!! / 1000.0))
+        }
     }
 
     AndroidView(
@@ -104,8 +140,6 @@ fun BatteryGraph(
         factory = { context ->
             LineChart(context).apply chart@{
                 description.isEnabled = false
-                legend.isEnabled = false
-                axisRight.isEnabled = false
                 isScaleXEnabled = true
                 isScaleYEnabled = false
                 isDragEnabled = true
@@ -117,9 +151,6 @@ fun BatteryGraph(
                 setDragDecelerationFrictionCoef(0.9f)
                 setClipValuesToContent(true)
                 setNoDataText("")
-                // 右端の目盛りのラベルが切れないよう余白を取る。
-                // setAvoidFirstLastClipping は最初のラベルを常に右へずらし、目盛り線と時刻がずれるため使わない
-                extraRightOffset = 16f
 
                 val formatter = TimeAxisFormatter().apply { updateFormats(context) }
                 xAxis.apply {
@@ -131,7 +162,29 @@ fun BatteryGraph(
                 setXAxisRenderer(
                     TimeXAxisRenderer(this@chart, formatter)
                 )
-                axisLeft.setDrawAxisLine(false)
+                axisLeft.apply {
+                    axisMinimum = 0f
+                    axisMaximum = 100f
+                    granularity = 1f
+                    setLabelCount(6, true)
+                    setDrawAxisLine(false)
+                    valueFormatter = object : ValueFormatter() {
+                        override fun getFormattedValue(value: Float) = "${value.toInt()}%"
+                    }
+                }
+                axisRight.apply {
+                    setDrawAxisLine(false)
+                    // 目盛り線は左軸（%）のものだけ描く
+                    setDrawGridLines(false)
+                    granularity = 1f
+                    setLabelCount(6, false)
+                }
+                legend.apply {
+                    verticalAlignment = Legend.LegendVerticalAlignment.TOP
+                    horizontalAlignment = Legend.LegendHorizontalAlignment.LEFT
+                    form = Legend.LegendForm.LINE
+                    isWordWrapEnabled = true
+                }
             }
         },
         update = { chart ->
@@ -143,21 +196,71 @@ fun BatteryGraph(
             formatter.baseTime = baseTime
             formatter.updateFormats(chart.context)
 
-            val entries = points.mapIndexed { i, record ->
-                Entry(formatter.toX(record.timestamp), values[i].toFloat())
-            }
-            val dataSet = LineDataSet(entries, "Battery").apply {
+            val dataSets = mutableListOf<LineDataSet>()
+            dataSets += LineDataSet(
+                levelPoints.map { Entry(formatter.toX(it.timestamp), it.level.toFloat()) },
+                legendLabels[0]
+            ).apply {
+                axisDependency = YAxis.AxisDependency.LEFT
                 // 各点の色はその点から次の点までの線の色になる
-                colors = points.map { if (it.isCharging == true) chargeColor else lineColor }
+                colors = levelPoints.map { if (it.isCharging == true) chargeColor else lineColor }
                 setDrawCircles(false)
                 setDrawValues(false)
                 lineWidth = 2f
-                // 塗りつぶしは 0% からの量が意味を持つ残量だけ
-                setDrawFilled(metric == GraphMetric.LEVEL)
+                setDrawFilled(true)
                 fillColor = lineColor
                 fillAlpha = 40
             }
-            setUpValueAxis(chart, metric, values)
+
+            // 温度: 右の縦軸（選んだ単位）
+            val hasTemperature = temperaturePoints.size >= 2
+            if (hasTemperature) {
+                val values = temperaturePoints.map { temperatureUnit.fromTenthsCelsius(it.temperature!!) }
+                dataSets += LineDataSet(
+                    temperaturePoints.mapIndexed { i, r -> Entry(formatter.toX(r.timestamp), values[i].toFloat()) },
+                    legendLabels[1]
+                ).apply {
+                    axisDependency = YAxis.AxisDependency.RIGHT
+                    color = temperatureColor
+                    setDrawCircles(false)
+                    setDrawValues(false)
+                    lineWidth = 1.5f
+                }
+                chart.axisRight.apply {
+                    // 値の幅が小さくても目盛りが細かくなりすぎないよう、最低限の幅と余白を取る
+                    val minSpan = if (temperatureUnit == TemperatureUnit.FAHRENHEIT) 8.0 else 4.0
+                    val center = (values.max() + values.min()) / 2
+                    val half = maxOf(values.max() - values.min(), minSpan) / 2 * 1.2
+                    axisMinimum = (center - half).toFloat()
+                    axisMaximum = (center + half).toFloat()
+                    valueFormatter = object : ValueFormatter() {
+                        override fun getFormattedValue(value: Float) = "%.0f%s".format(value, temperatureUnit.symbol)
+                    }
+                }
+            }
+            chart.axisRight.isEnabled = hasTemperature
+            // 右の縦軸がないときは、右端の時刻のラベルが切れないよう余白を取る
+            chart.extraRightOffset = if (hasTemperature) 0f else 16f
+
+            // 電圧: 目盛りなしの点線。変化の形が見えるよう、左軸の 10〜90% の範囲に引き伸ばして描く
+            if (voltagePoints.size >= 2) {
+                val volts = voltagePoints.map { it.voltage!!.toDouble() }
+                val low = volts.min()
+                val span = maxOf(volts.max() - low, 200.0)
+                dataSets += LineDataSet(
+                    voltagePoints.mapIndexed { i, r ->
+                        Entry(formatter.toX(r.timestamp), (10 + 80 * (volts[i] - low) / span).toFloat())
+                    },
+                    legendLabels.last()
+                ).apply {
+                    axisDependency = YAxis.AxisDependency.LEFT
+                    color = voltageColor
+                    setDrawCircles(false)
+                    setDrawValues(false)
+                    lineWidth = 1.5f
+                    enableDashedLine(12f, 8f, 0f)
+                }
+            }
 
             chart.xAxis.apply {
                 this.textColor = textColor
@@ -167,50 +270,36 @@ fun BatteryGraph(
             }
             chart.axisLeft.textColor = textColor
             chart.axisLeft.gridColor = gridColor
+            chart.axisRight.textColor = temperatureColor
+            // 凡例は自前で作る（残量の線は区間ごとに色が違い、標準の凡例では色の数だけ項目ができるため）。
+            // 温度・電圧を表示しないときは凡例を出さない
+            chart.legend.isEnabled = dataSets.size > 1
+            chart.legend.textColor = textColor
+            chart.legend.setCustom(
+                dataSets.mapIndexed { i, set ->
+                    LegendEntry().apply {
+                        label = set.label
+                        form = Legend.LegendForm.LINE
+                        formLineWidth = 2.5f
+                        formSize = 16f
+                        formColor = if (i == 0) lineColor else set.color
+                        if (set.isDashedLineEnabled) formLineDashEffect = DashPathEffect(floatArrayOf(6f, 4f), 0f)
+                    }
+                }
+            )
 
-            chart.data = LineData(dataSet)
+            chart.data = LineData(dataSets.toList())
             chart.contentDescription = summary
-            // 期間や項目を切り替えたらズームを解除する
-            if (chart.tag != period to metric) {
+            // 期間を切り替えたらズームを解除する
+            if (chart.tag != period) {
                 chart.fitScreen()
-                chart.tag = period to metric
+                chart.tag = period
             }
             // 軸の範囲はデータ設定後に決まるので、表示幅の制限はその後に設定する
             chart.setVisibleXRangeMinimum(MIN_VISIBLE_MINUTES)
             chart.invalidate()
         }
     )
-}
-
-/** 縦軸の範囲と書式。残量は 0〜100% に固定し、温度・電圧は値の範囲に余白を足して決める */
-private fun setUpValueAxis(chart: LineChart, metric: GraphMetric, values: List<Double>) {
-    chart.axisLeft.apply {
-        when (metric) {
-            GraphMetric.LEVEL -> {
-                axisMinimum = 0f
-                axisMaximum = 100f
-                granularity = 1f
-                setLabelCount(6, true)
-            }
-            GraphMetric.TEMPERATURE, GraphMetric.VOLTAGE -> {
-                // 値の幅が小さくても目盛りが細かくなりすぎないよう、最低限の幅と余白を取る
-                val minSpan = if (metric == GraphMetric.TEMPERATURE) 4.0 else 0.2
-                val center = (values.max() + values.min()) / 2
-                val half = maxOf(values.max() - values.min(), minSpan) / 2 * 1.2
-                axisMinimum = (center - half).toFloat()
-                axisMaximum = (center + half).toFloat()
-                granularity = if (metric == GraphMetric.TEMPERATURE) 1f else 0.05f
-                setLabelCount(6, false)
-            }
-        }
-        valueFormatter = object : ValueFormatter() {
-            override fun getFormattedValue(value: Float) = when (metric) {
-                GraphMetric.LEVEL -> "${value.toInt()}%"
-                GraphMetric.TEMPERATURE -> "%.0f℃".format(value)
-                GraphMetric.VOLTAGE -> "%.2fV".format(value)
-            }
-        }
-    }
 }
 
 /**

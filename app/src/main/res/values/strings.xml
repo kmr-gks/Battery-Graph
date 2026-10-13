@@ -21,7 +21,7 @@
 	<string name="status_discharging">Discharging</string>
 	<string name="status_plugged_not_charging">Plugged in, not charging</string>
 	<string name="status_full">Fully charged</string>
-	<string name="status_details" translatable="false">%1$.1f℃ ・ %2$.2fV</string>
+	<string name="status_details" translatable="false">%1$s ・ %2$.2fV</string>
 	<string name="status_pace">Draining about %1$.1f%%/h ・ about %2$s left</string>
 	<string name="status_pace_unknown">Calculating drain rate</string>
 	<string name="status_last_record">Last recorded %1$s</string>
@@ -39,10 +39,15 @@
 
 	<string name="graph_empty">The graph appears once two or more records are saved</string>
 	<string name="graph_description">Battery level graph for the last %1$s. Now %2$d%%, highest %3$d%%, lowest %4$d%%.</string>
-	<string name="metric_level">Level</string>
-	<string name="metric_temperature">Temperature</string>
-	<string name="metric_voltage">Voltage</string>
-	<string name="graph_description_temperature">Battery temperature graph for the last %1$s. Now %2$.1f℃, highest %3$.1f℃, lowest %4$.1f℃.</string>
-	<string name="graph_description_voltage">Battery voltage graph for the last %1$s. Now %2$.2fV, highest %3$.2fV, lowest %4$.2fV.</string>
-	<string name="graph_empty_metric">No temperature or voltage records in this period yet</string>
+	<string name="legend_level">Level %1$d%%</string>
+	<string name="legend_temperature">Temperature %1$s</string>
+	<string name="legend_voltage">Voltage %1$.2fV</string>
+	<string name="graph_description_temperature">Temperature now %1$s, highest %2$s, lowest %3$s.</string>
+	<string name="graph_description_voltage">Voltage now %1$.2fV.</string>
+	<string name="settings_graph_section">Graph</string>
+	<string name="show_temperature_label">Show temperature</string>
+	<string name="show_temperature_description">Draws battery temperature with the scale on the right</string>
+	<string name="show_voltage_label">Show voltage</string>
+	<string name="show_voltage_description">Draws voltage as a dashed line (shape only, without a scale)</string>
+	<string name="temperature_unit_label">Temperature unit</string>
 </resources>

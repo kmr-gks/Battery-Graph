@@ -35,10 +35,15 @@
 
 	<string name="graph_empty">記録が2件以上たまるとグラフを表示します</string>
 	<string name="graph_description">過去%1$sの電池残量グラフ。現在%2$d%%、最高%3$d%%、最低%4$d%%。</string>
-	<string name="metric_level">残量</string>
-	<string name="metric_temperature">温度</string>
-	<string name="metric_voltage">電圧</string>
-	<string name="graph_description_temperature">過去%1$sの電池温度グラフ。現在%2$.1f℃、最高%3$.1f℃、最低%4$.1f℃。</string>
-	<string name="graph_description_voltage">過去%1$sの電池電圧グラフ。現在%2$.2fV、最高%3$.2fV、最低%4$.2fV。</string>
-	<string name="graph_empty_metric">この期間の温度・電圧の記録はまだありません</string>
+	<string name="legend_level">残量 %1$d%%</string>
+	<string name="legend_temperature">温度 %1$s</string>
+	<string name="legend_voltage">電圧 %1$.2fV</string>
+	<string name="graph_description_temperature">温度は現在%1$s、最高%2$s、最低%3$s。</string>
+	<string name="graph_description_voltage">電圧は現在%1$.2fV。</string>
+	<string name="settings_graph_section">グラフ</string>
+	<string name="show_temperature_label">温度を表示</string>
+	<string name="show_temperature_description">電池の温度を右側の目盛りで表示します</string>
+	<string name="show_voltage_label">電圧を表示</string>
+	<string name="show_voltage_description">電圧を点線で表示します（目盛りはなく、変化の形だけを示します）</string>
+	<string name="temperature_unit_label">温度の単位</string>
 </resources>

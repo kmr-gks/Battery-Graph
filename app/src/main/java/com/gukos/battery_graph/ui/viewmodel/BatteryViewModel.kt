@@ -6,17 +6,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gukos.battery_graph.data.entity.BatteryRecord
 import com.gukos.battery_graph.repository.BatteryRepository
-import com.gukos.battery_graph.ui.graph.GraphMetric
 import com.gukos.battery_graph.ui.graph.GraphPeriod
 import com.gukos.battery_graph.util.BatterySnapshot
+import com.gukos.battery_graph.util.GraphSettings
 import com.gukos.battery_graph.util.MonitorSettings
+import com.gukos.battery_graph.util.TemperatureUnit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class BatteryViewModel(
     private val repository: BatteryRepository,
-    private val monitorSettings: MonitorSettings
+    private val monitorSettings: MonitorSettings,
+    private val graphSettings: GraphSettings
 ) : ViewModel() {
 
     val highPrecisionEnabled: StateFlow<Boolean> = monitorSettings.highPrecisionEnabled
@@ -39,12 +41,13 @@ class BatteryViewModel(
         _period.value = period
     }
 
-    private val _metric = MutableStateFlow(GraphMetric.LEVEL)
-    val metric: StateFlow<GraphMetric> = _metric.asStateFlow()
+    val showTemperature: StateFlow<Boolean> = graphSettings.showTemperature
+    val showVoltage: StateFlow<Boolean> = graphSettings.showVoltage
+    val temperatureUnit: StateFlow<TemperatureUnit> = graphSettings.temperatureUnit
 
-    fun selectMetric(metric: GraphMetric) {
-        _metric.value = metric
-    }
+    fun setShowTemperature(show: Boolean) = graphSettings.setShowTemperature(show)
+    fun setShowVoltage(show: Boolean) = graphSettings.setShowVoltage(show)
+    fun setTemperatureUnit(unit: TemperatureUnit) = graphSettings.setTemperatureUnit(unit)
 
     /** 選択中の期間の記録（古い順） */
     @OptIn(ExperimentalCoroutinesApi::class)

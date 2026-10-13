@@ -19,3 +19,15 @@ private val ChargingDark = Color(0xFF81C784)
 
 @Composable
 fun chargingColor(): Color = if (isSystemInDarkTheme()) ChargingDark else ChargingLight
+
+// グラフの温度（右の縦軸）と電圧（点線）の色。残量の青・充電中の緑と見分けられる色にする
+private val TemperatureLight = Color(0xFFD84315)
+private val TemperatureDark = Color(0xFFFFAB91)
+private val VoltageLight = Color(0xFF7B1FA2)
+private val VoltageDark = Color(0xFFCE93D8)
+
+@Composable
+fun temperatureColor(): Color = if (isSystemInDarkTheme()) TemperatureDark else TemperatureLight
+
+@Composable
+fun voltageColor(): Color = if (isSystemInDarkTheme()) VoltageDark else VoltageLight
