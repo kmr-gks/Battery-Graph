@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6FF0A0" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#2FC56E" stop-opacity="0.35"/>
+    </linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.38"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="inner">
+      <rect x="259" y="394" width="476" height="236" rx="38"/>
+    </clipPath>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fdd78a"/>
+      <stop offset="1" stop-color="#ffffff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <!-- 電池の中身（ガラス越しに見える部分） -->
+  <rect x="237" y="372" width="520" height="280" rx="56" fill="#FFFFFF" fill-opacity="0.14"/>
+  <g clip-path="url(#inner)">
+    <!-- 目盛り線 -->
+    <path d="M259,473 H735 M259,551 H735" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="6" stroke-dasharray="18 16"/>
+    <!-- グラフ（塗り） -->
+    <path d="M240,468 C290,478 330,500 370,522 S440,572 470,574 C500,576 520,520 560,478 S640,430 680,446 S740,480 760,486 L760,640 L240,640 Z" fill="url(#area)"/>
+    <!-- グラフ（線） -->
+    <path d="M240,468 C290,478 330,500 370,522 S440,572 470,574 C500,576 520,520 560,478 S640,430 680,446 S740,480 760,486" fill="none" stroke="#D8FFE6" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- ガラスの光沢 -->
+    <rect x="259" y="394" width="476" height="104" fill="url(#gloss)"/>
+  </g>
+  <!-- 外枠と端子 -->
+  <rect x="237" y="372" width="520" height="280" rx="56" fill="none" stroke="#000000" stroke-width="22"/>
+  <rect x="768" y="457" width="34" height="110" rx="14" fill="#000000"/>
+  <!-- 枠のハイライト -->
+  <path d="M300,397 H560" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="10" stroke-linecap="round"/>
+</svg>
